@@ -5,7 +5,7 @@
 Synopsis:
     Generate Odoo models.py from XML schema.
 Usage:
-    python gends_run_gen_django.py [options] <schema_file>
+    python gends_run_gen_odoo.py [options] <schema_file>
 Options:
     -h, --help      Display this help message.
     -f, --force     Overwrite the following files without asking:
@@ -21,8 +21,8 @@ Options:
                     Do not add suffix "_model" and _form" to
                     generated class names.
 Examples:
-    python gends_run_gen_django.py my_schema.xsd
-    python gends_run_gen_django.py -f -p ../generateDS.py my_other_schema.xsd
+    python gends_run_gen_odoo.py my_schema.xsd
+    python gends_run_gen_odoo.py -f -p ../generateDS.py my_other_schema.xsd
 
 """
 
@@ -93,12 +93,12 @@ def generate(options, schema_file_name):
         return
     if options['class_suffixes']:
         args = (
-            './gends_generate_django.py', '-f',
+            './gends_generate_odoo.py', '-f',
             bindings_file_stem,
         )
     else:
         args = (
-            './gends_generate_django.py', '-f', '--no-class-suffixes',
+            './gends_generate_odoo.py', '-f', '--no-class-suffixes',
             bindings_file_stem,
         )
     if not run_cmd(options, args):

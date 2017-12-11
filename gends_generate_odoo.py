@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 Synopsis:
-    Generate Django model and form definitions.
-    Write to forms.py and models.py.
+    Generate Odoo model definitions.
+    Write to models.py.
 Usage:
     python gen_model.py [options]
 Options:
@@ -83,13 +83,13 @@ def generate_model(options, module_name):
         sys.exit(
             '\n* Error.  Cannot import generatedssuper.py.\n'
             'Make sure that the version of generatedssuper.py intended\n'
-            'for django support is first on your PYTHONPATH.\n'
+            'for Odoo support is first on your PYTHONPATH.\n'
         )
     if not hasattr(generatedssuper, 'Generate_DS_Super_Marker_'):
         sys.exit(
             '\n* Error.  Not the correct version of generatedssuper.py.\n'
             'Make sure that the version of generatedssuper.py intended\n'
-            'for django support is first on your PYTHONPATH.\n'
+            'for Odoo support is first on your PYTHONPATH.\n'
         )
     supermod = importlib.import_module(module_name)
     models_file_name = 'models.py'
