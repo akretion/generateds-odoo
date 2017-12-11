@@ -13,6 +13,9 @@ from generateDS import AnyTypeIdentifier, mapName, cleanupName
 # of generatedssuper.py.
 Generate_DS_Super_Marker_ = None
 
+Lib_name = 'nfe'
+Version = 'v3_10'
+
 #
 # Tables of builtin types
 Simple_type_table = {
@@ -160,9 +163,17 @@ class GeneratedsSuper(object):
             model_suffix = '_model'
         else:
             model_suffix = ''
-        class_name = unique_name_map.get(cls.__name__)
-        wrtmodels('\nclass %s%s(models.Model):\n' % (
+        class_name = unique_name_map.get(cls.__name__).replace('Type', '') # TODO regexp replace
+        field_prefix = "%s_%s__" % (Lib_name, class_name.lower())
+
+        wrtmodels('\nclass %s%s(sped.SpedBase):\n' % (
             class_name, model_suffix, ))
+        if cls.__doc__:
+            wrtmodels('    _description = """%s"""\n' % (cls.__doc__, ))
+        wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version, class_name.lower(), ))
+        wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
+        wrtmodels("    _concrete_impls = []\n\n")
+
         if cls.superclass is not None:
             wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
                 cls.superclass.__name__, cls.superclass.__name__, model_suffix, ))
