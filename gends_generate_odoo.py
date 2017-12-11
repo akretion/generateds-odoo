@@ -69,12 +69,6 @@ class Writer(object):
 #
 
 def generate_model(options, module_name):
-
-    if options.class_suffixes:
-        model_suffix = '_model'
-    else:
-        model_suffix = ''
-
     global supermod
     try:
         import generatedssuper
@@ -104,7 +98,18 @@ def generate_model(options, module_name):
     models_writer = Writer(models_file_name)
     wrtmodels = models_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
-    wrtmodels('from django.db import models\n\n')
+    wrtmodels('# -*- coding: utf-8 -*-\n\n')
+    # TODO put generation header like in lib
+    wrtmodels('from odoo import models, fields\n')
+    wrtmodels('from . import sped\n') # FIXME parametrable?
+
+
+# TODO
+#    for key in supermod.STEnumerations:
+#        wrtmodels('"""%s"""\n' % (supermod.SimpleTypes[key]))
+#        wrtmodels('%s = %s\n\n' % (key, [(i, i) for i in supermod.STEnumerations[key]]))
+
+    wrtmodels('\n')
     for class_name in supermod.__all__:
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
@@ -169,7 +174,7 @@ def main():
         usage()
     options = ProgramOptions()
     options.force = False
-    options.class_suffixes = True
+    options.class_suffixes = False
     for opt, val in opts:
         if opt in ('-h', '--help'):
             usage()
