@@ -3,7 +3,7 @@
 
 """
 Synopsis:
-    Generate Django models.py and forms.py from XML schema.
+    Generate Odoo models.py from XML schema.
 Usage:
     python gends_run_gen_django.py [options] <schema_file>
 Options:
@@ -12,7 +12,6 @@ Options:
                         <schema>lib.py
                         generateds_definedsimpletypes.py
                         models.py
-                        forms.py
     -p, --path-to-generateDS-script=/path/to/generateDS.py
                     Path to the generateDS.py script.
     -v, --verbose   Display additional information while running.
@@ -61,7 +60,6 @@ def generate(options, schema_file_name):
     bindings_file_name = '%slib.py' % (schema_name_stem, )
     bindings_file_stem = os.path.splitext(bindings_file_name)[0]
     model_file_name = 'models.py'
-    form_file_name = 'forms.py'
     dbg_msg(options, 'schema_name_stem: %s\n' % (schema_name_stem, ))
     dbg_msg(options, 'bindings_file_name: %s\n' % (bindings_file_name, ))
     if options['force']:
@@ -76,8 +74,7 @@ def generate(options, schema_file_name):
     else:
         flag1 = exists(bindings_file_name)
         flag2 = exists(model_file_name)
-        flag3 = exists(form_file_name)
-        if (flag1 or flag2 or flag3):
+        if (flag1 or flag2):
             return
     args = (
         options['path'],

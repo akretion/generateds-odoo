@@ -155,18 +155,14 @@ class GeneratedsSuper(object):
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, wrtforms, unique_name_map, class_suffixes):
+            cls, wrtmodels, unique_name_map, class_suffixes):
         if class_suffixes:
             model_suffix = '_model'
-            form_suffix = '_form'
         else:
             model_suffix = ''
-            form_suffix = ''
         class_name = unique_name_map.get(cls.__name__)
         wrtmodels('\nclass %s%s(models.Model):\n' % (
             class_name, model_suffix, ))
-        wrtforms('\nclass %s%s(forms.Form):\n' % (
-            class_name, form_suffix, ))
         if cls.superclass is not None:
             wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
                 cls.superclass.__name__, cls.superclass.__name__, model_suffix, ))
@@ -195,39 +191,24 @@ class GeneratedsSuper(object):
                 if data_type in Integer_type_table:
                     wrtmodels('    %s = models.IntegerField(%s)\n' % (
                         name, options, ))
-                    wrtforms('    %s = forms.IntegerField(%s)\n' % (
-                        name, options, ))
                 elif data_type in Float_type_table:
                     wrtmodels('    %s = models.FloatField(%s)\n' % (
-                        name, options, ))
-                    wrtforms('    %s = forms.FloatField(%s)\n' % (
                         name, options, ))
                 elif data_type in Date_type_table:
                     wrtmodels('    %s = models.DateField(%s)\n' % (
                         name, options, ))
-                    wrtforms('    %s = forms.DateField(%s)\n' % (
-                        name, options, ))
                 elif data_type in DateTime_type_table:
                     wrtmodels('    %s = models.DateTimeField(%s)\n' % (
-                        name, options, ))
-                    wrtforms('    %s = forms.DateTimeField(%s)\n' % (
                         name, options, ))
                 elif data_type in Time_type_table:
                     wrtmodels('    %s = models.TimeField(%s)\n' % (
                         name, options, ))
-                    wrtforms('    %s = forms.TimeField(%s)\n' % (
-                        name, options, ))
                 elif data_type in Boolean_type_table:
                     wrtmodels('    %s = models.NullBooleanField(%s)\n' % (
-                        name, options, ))
-                    wrtforms('    %s = forms.NullBooleanField(%s)\n' % (
                         name, options, ))
                 elif data_type in String_type_table:
                     wrtmodels(
                         '    %s = models.CharField(max_length=1000, %s)\n' % (
-                            name, options, ))
-                    wrtforms(
-                        '    %s = forms.CharField(max_length=1000, %s)\n' % (
                             name, options, ))
                 else:
                     sys.stderr.write('Unhandled simple type: %s %s\n' % (
@@ -246,10 +227,6 @@ class GeneratedsSuper(object):
                     wrtmodels(
                         '        blank=True, null=True,\n')
                 wrtmodels('    )\n')
-                wrtforms(
-                    '    %s = forms.MultipleChoiceField(%s%s.objects'
-                    '.all())\n' % (
-                        name, clean_data_type, model_suffix, ))
         wrtmodels('\n')
         wrtmodels('    def __unicode__(self):\n')
         wrtmodels('        return "id: %s" % (self.id, )\n')
