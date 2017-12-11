@@ -157,6 +157,23 @@ class GeneratedsSuper(object):
         return prefix, name
 
     @classmethod
+    def extract_string_help_select(cls, spec):
+        string = spec.get_name()
+        help_attr = None
+        if spec.get_documentation():
+            doc = spec.get_documentation()
+            help_attr = 'help="""%s"""' % (doc)
+            if len(doc) < 64: # then use help for string
+                string = doc
+            elif len(doc.split(".")[0]) < 64:
+                string = doc.split(".")[0]
+            elif len(doc.split(",")[0]) < 64:
+                string = doc.split(",")[0]
+            elif len(doc.split("-")[0]) < 64:
+                string = doc.split("-")[0]
+        return string, help_attr, [] # TODO extract possible select options
+
+    @classmethod
     def generate_model_(
             cls, wrtmodels, unique_name_map, class_suffixes):
         if class_suffixes:
@@ -179,48 +196,68 @@ class GeneratedsSuper(object):
                 cls.superclass.__name__, cls.superclass.__name__, model_suffix, ))
         for spec in cls.member_data_items_:
             name = spec.get_name()
+            choice = spec.get_choice()
             prefix, name = cls.get_prefix_name(name)
             data_type = spec.get_data_type()
             is_optional = spec.get_optional()
             prefix, data_type = cls.get_prefix_name(data_type)
-            if data_type in Defined_simple_type_table:
-                data_type = Defined_simple_type_table[data_type]
-                prefix, data_type = cls.get_prefix_name(data_type.type_name)
+#            if data_type in Defined_simple_type_table:
+#                data_type = Defined_simple_type_table[data_type]
+#                prefix, data_type = cls.get_prefix_name(data_type.type_name)
             name = mapName(cleanupName(name))
             if name == 'id':
                 name += 'x'
             elif name.endswith('_') and not name == AnyTypeIdentifier:
                 name += 'x'
+            field_name = "%s%s" % (field_prefix, name)
             clean_data_type = mapName(cleanupName(data_type))
             if data_type == AnyTypeIdentifier:
                 data_type = 'string'
+            string, help_attr, select = cls.extract_string_help_select(spec)
+
+            if is_optional:
+                options = 'string="""%s"""' % (string,)
+            else:
+                options = 'string="""%s""", xsd_required=True' % (string,)
+
+            if choice != None:
+                options = """choice='%s', %s""" % (choice, options)
+
+            if help_attr:
+                options = "%s, %s" % (options, help_attr,)
+
             if data_type in Simple_type_table:
-                if is_optional:
-                    options = 'blank=True, null=True'
-                else:
-                    options = ''
                 if data_type in Integer_type_table:
-                    wrtmodels('    %s = models.IntegerField(%s)\n' % (
-                        name, options, ))
+                    wrtmodels('    %s = fields.Integer(%s)\n' % (
+                        field_name, options, ))
                 elif data_type in Float_type_table:
-                    wrtmodels('    %s = models.FloatField(%s)\n' % (
-                        name, options, ))
+                    wrtmodels('    %s = fields.Float(%s)\n' % (
+                        field_name, options, ))
                 elif data_type in Date_type_table:
-                    wrtmodels('    %s = models.DateField(%s)\n' % (
-                        name, options, ))
+                    wrtmodels('    %s = fields.Date(%s)\n' % (
+                        field_name, options, ))
                 elif data_type in DateTime_type_table:
-                    wrtmodels('    %s = models.DateTimeField(%s)\n' % (
-                        name, options, ))
+                    wrtmodels('    %s = fields.Datetime(%s)\n' % (
+                        field_name, options, ))
                 elif data_type in Time_type_table:
-                    wrtmodels('    %s = models.TimeField(%s)\n' % (
-                        name, options, ))
+                    sys.stderr.write('Unhandled simple type: %s %s\n' % (
+                        field_name, data_type, ))
+                    wrtmodels('    %s = fields.TimeField(%s)\n' % (
+                        field_name, options, ))
                 elif data_type in Boolean_type_table:
-                    wrtmodels('    %s = models.NullBooleanField(%s)\n' % (
-                        name, options, ))
+                    wrtmodels('    %s = fields.Boolean(%s)\n' % (
+                        field_name, options, ))
+                # TODO Monetary and Binary?
                 elif data_type in String_type_table:
-                    wrtmodels(
-                        '    %s = models.CharField(max_length=1000, %s)\n' % (
-                            name, options, ))
+                    if False: # supermod.STEnumerations.get(name): #spec.get_primary_data_type()):
+                        pass # TODO
+#                        wrtmodels(
+#                            '    %s = fields.Selection(%s, %s)\n' % (
+#                                field_name, name, options, ))
+                    else:
+                        wrtmodels(
+                            '    %s = fields.Char(%s)\n' % (
+                                field_name, options, )) # TODO size
                 else:
                     sys.stderr.write('Unhandled simple type: %s %s\n' % (
                         name, data_type, ))
