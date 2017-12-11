@@ -247,8 +247,17 @@ class GeneratedsSuper(object):
                 elif data_type in Boolean_type_table:
                     wrtmodels('    %s = fields.Boolean(%s)\n' % (
                         field_name, options, ))
-                # TODO Monetary and Binary?
                 elif data_type in String_type_table:
+                    if len(spec.get_data_type_chain()) == 0:
+                        original_st = data_type
+                    else:
+                        original_st = spec.get_data_type_chain()[0]
+                    if 'TDec_' in original_st:
+                        digits = original_st[8]
+                        options = "digits=%s,\n        %s" % (digits, options)
+                        wrtmodels(
+                            '    %s = fields.Monetary(%s)\n' % (
+                                field_name, options, ))
                     if False: # supermod.STEnumerations.get(name): #spec.get_primary_data_type()):
                         pass # TODO
 #                        wrtmodels(
