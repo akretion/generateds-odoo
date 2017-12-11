@@ -239,10 +239,3 @@ class GeneratedsSuper(object):
                         '        blank=True, null=True,\n')
                 wrtmodels('    )\n')
         wrtmodels('\n')
-        wrtmodels('    def __unicode__(self):\n')
-        wrtmodels('        return "id: %s" % (self.id, )\n')
-        wrtmodels('\n')
-
-
-#
-# Local functions
