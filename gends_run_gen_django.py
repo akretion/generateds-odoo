@@ -62,7 +62,6 @@ def generate(options, schema_file_name):
     bindings_file_stem = os.path.splitext(bindings_file_name)[0]
     model_file_name = 'models.py'
     form_file_name = 'forms.py'
-    admin_file_name = 'admin.py'
     dbg_msg(options, 'schema_name_stem: %s\n' % (schema_name_stem, ))
     dbg_msg(options, 'bindings_file_name: %s\n' % (bindings_file_name, ))
     if options['force']:
@@ -78,8 +77,7 @@ def generate(options, schema_file_name):
         flag1 = exists(bindings_file_name)
         flag2 = exists(model_file_name)
         flag3 = exists(form_file_name)
-        flag4 = exists(admin_file_name)
-        if (flag1 or flag2 or flag3 or flag4):
+        if (flag1 or flag2 or flag3):
             return
     args = (
         options['path'],

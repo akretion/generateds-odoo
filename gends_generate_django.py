@@ -96,24 +96,20 @@ def generate_model(options, module_name):
     supermod = importlib.import_module(module_name)
     models_file_name = 'models.py'
     forms_file_name = 'forms.py'
-    admin_file_name = 'admin.py'
     if (
             (
                 os.path.exists(models_file_name) or
-                os.path.exists(forms_file_name) or
-                os.path.exists(admin_file_name)
+                os.path.exists(forms_file_name)
             ) and
             not options.force):
         sys.stderr.write(
-            '\nmodels.py or forms.py or admin.py exists.  '
+            '\nmodels.py or forms.py exists.  '
             'Use -f/--force to overwrite.\n\n')
         sys.exit(1)
     models_writer = Writer(models_file_name)
     forms_writer = Writer(forms_file_name)
-    admin_writer = Writer(admin_file_name)
     wrtmodels = models_writer.write
     wrtforms = forms_writer.write
-    wrtadmin = admin_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
     wrtmodels('from django.db import models\n\n')
     wrtforms('from django import forms\n\n')
@@ -124,27 +120,22 @@ def generate_model(options, module_name):
                 wrtmodels, wrtforms, unique_name_map, options.class_suffixes)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
-    wrtadmin('from django.contrib import admin\n')
-    wrtadmin('from models import \\\n')
     first_time = True
     for class_name in supermod.__all__:
         class_name = unique_name_map.get(class_name)
-        if first_time:
-            wrtadmin('    %s%s' % (class_name, model_suffix ))
-            first_time = False
-        else:
-            wrtadmin(', \\\n    %s%s' % (class_name, model_suffix ))
-    wrtadmin('\n\n')
+#        if first_time:
+#            wrtadmin('    %s%s' % (class_name, model_suffix ))
+#            first_time = False
+#        else:
+#            wrtadmin(', \\\n    %s%s' % (class_name, model_suffix ))
     for class_name in supermod.__all__:
         class_name = unique_name_map.get(class_name)
-        wrtadmin('admin.site.register(%s%s)\n' % (class_name, model_suffix ))
-    wrtadmin('\n')
+#        wrtadmin('admin.site.register(%s%s)\n' % (class_name, model_suffix ))
+#    wrtadmin('\n')
     models_writer.close()
     forms_writer.close()
-    admin_writer.close()
     print('Wrote %d lines to models.py' % (models_writer.get_count(), ))
     print('Wrote %d lines to forms.py' % (forms_writer.get_count(), ))
-    print('Wrote %d lines to admin.py' % (admin_writer.get_count(), ))
 
 
 def make_unique_name_map(name_list):
