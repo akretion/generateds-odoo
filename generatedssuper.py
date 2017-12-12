@@ -170,7 +170,7 @@ class GeneratedsSuper(object):
                 string = doc.split(",")[0]
             elif len(doc.split("-")[0]) < 64:
                 string = doc.split("-")[0]
-        return string, help_attr, [] # TODO extract possible select options
+        return string, help_attr, []
 
     @classmethod
     def generate_model_(
@@ -201,10 +201,9 @@ class GeneratedsSuper(object):
         if class_name in implicit_many2ones:
             comodel = implicit_many2ones[class_name][0][0]
             target_field = implicit_many2ones[class_name][0][1]
-            wrtmodels(
-                            '    %s%s_%s_id = fields.Many2one("%s.%s.%s")\n' % (
-                                field_prefix, comodel, target_field, Lib_name, Version,
-                                comodel.lower()))
+            wrtmodels('    %s%s_%s_id = fields.Many2one("%s.%s.%s")\n' % (
+                      field_prefix, comodel, target_field, Lib_name, Version,
+                      comodel.lower()))
 
         choice_selectors = {}
         for spec in cls.member_data_items_:
@@ -254,6 +253,7 @@ class GeneratedsSuper(object):
             if choice != None:
                 options = """choice='%s',\n        %s""" % (choice, options)
 
+            options_nohelp = options
             if help_attr:
                 options = "%s,\n        %s" % (options, help_attr,)
 
@@ -294,6 +294,8 @@ class GeneratedsSuper(object):
                              ).get_enumeration_():
                             enum_type = Defined_simple_type_table[original_st]
                             enum = enum_type.get_enumeration_()
+                            options = "%s,\n        help=%s" % (options_nohelp,
+                                enum_type.get_descr_())
                             wrtmodels(
                                 '    %s = fields.Selection(%s,\n        %s)\n' % (
                                 field_name, original_st, options, ))

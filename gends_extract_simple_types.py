@@ -351,10 +351,48 @@ def get_simple_name_type(node):
             for restriction in nodes:
                 values = restriction.xpath("./xs:enumeration/@value",
                                                 namespaces=Nsmap)
-                # TODO try heuristics to extract
-                # selection labels from annotations
-                if len(values) > 0:
-                    enumeration = [(v, v) for v in values]
+                if values:
+                    enumeration = [(v.strip(), v.strip()) for v in values]
+
+
+                    # now we try to read enum labels from the doc annotation:
+                    enum = list(reversed(enumeration))
+                    enum2 = []
+                    if len(description) > 0:
+                        descr = description.strip()
+
+                        # first we try to see if there could be 1 label per line
+                        lines = descr.splitlines()
+                        descr_size = len(lines)
+
+                        # else we try to split with ";"
+                        if descr_size < len(enum) and ":" in description:
+                            split = description.split(":")
+                            lines = [split[0]] + split[1].split(";")
+                            descr = "\n".join(lines)
+                            descr_size = len(lines)
+
+                        if descr_size >= len(enum):
+                            # case where labels on each line
+                            i = 0
+                            for l in reversed(lines):
+                                l = l.strip()
+                                if not l.startswith(enum[i][0]):
+                                    break
+                                else:
+                                    if l.endswith(";"):
+                                        l = l[0:len(l) - 1]
+                                    enum2.append((enum[i][0], l))
+                                if len(enum2) == len(enum):
+                                    break
+                                i += 1
+
+                        if len(enum2) == len(enum):
+                            description = "\n".join(lines[0:descr_size - i - 1])
+                            enumeration = list(reversed(enum2))
+                        else:
+                            description = "\n".join([l.strip() for l in lines])
+
 
     # Not a restriction.  Try list.
     if type_name is None:

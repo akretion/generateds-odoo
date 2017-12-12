@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Synopsis:
     Generate Odoo model definitions.
@@ -107,12 +107,13 @@ def generate_model(options, module_name):
     for type_name in sorted(Defined_simple_type_table.keys()):
         descr = Defined_simple_type_table[type_name]
         if descr.get_enumeration_():
-            if len(descr.get_descr_()) > 0:
-                wrtmodels('"""%s"""\n' % (descr.get_descr_()))
-            wrtmodels('%s = %s\n' % (type_name,
-                                       descr.get_enumeration_()))
+            enum = descr.get_enumeration_()
 
-    wrtmodels('\n')
+            if len(descr.get_descr_()) > 0:
+                descr = "\n# ".join(descr.get_descr_().splitlines())
+                wrtmodels("# %s" % (descr,))
+
+            wrtmodels('\n%s = %s\n' % (type_name, enum))
 
     # collect implicit m2o related to explicit o2m:
     implicit_many2ones = {}
