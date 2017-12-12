@@ -4,7 +4,6 @@ import sys
 from generateds_definedsimpletypes import Defined_simple_type_table
 from generateDS import AnyTypeIdentifier, mapName, cleanupName
 
-
 #
 # Globals
 
@@ -180,20 +179,23 @@ class GeneratedsSuper(object):
             model_suffix = '_model'
         else:
             model_suffix = ''
-        class_name = unique_name_map.get(cls.__name__).replace('Type', '') # TODO regexp replace
+        class_name = unique_name_map.get(cls.__name__).replace('Type', '')
+        # TODO regexp replace
         field_prefix = "%s_%s__" % (Lib_name, class_name.lower())
 
         wrtmodels('\nclass %s%s(sped.SpedBase):\n' % (
             class_name, model_suffix, ))
         if cls.__doc__:
             wrtmodels('    _description = """%s"""\n' % (cls.__doc__, ))
-        wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version, class_name.lower(), ))
+        wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
+                                                class_name.lower(), ))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
         wrtmodels("    _concrete_impls = []\n\n")
 
         if cls.superclass is not None:
             wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
-                cls.superclass.__name__, cls.superclass.__name__, model_suffix, ))
+                cls.superclass.__name__, cls.superclass.__name__,
+                model_suffix, ))
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
@@ -201,9 +203,9 @@ class GeneratedsSuper(object):
             data_type = spec.get_data_type()
             is_optional = spec.get_optional()
             prefix, data_type = cls.get_prefix_name(data_type)
-#            if data_type in Defined_simple_type_table:
-#                data_type = Defined_simple_type_table[data_type]
-#                prefix, data_type = cls.get_prefix_name(data_type.type_name)
+            if data_type in Defined_simple_type_table:
+                data_type = (Defined_simple_type_table[data_type]
+                             ).get_type_name_()
             name = mapName(cleanupName(name))
             if name == 'id':
                 name += 'x'
@@ -258,7 +260,7 @@ class GeneratedsSuper(object):
                         wrtmodels(
                             '    %s = fields.Monetary(%s)\n' % (
                                 field_name, options, ))
-                    if False: # supermod.STEnumerations.get(name): #spec.get_primary_data_type()):
+                    if False: # supermod.STEnumerations.get(name):
                         pass # TODO
 #                        wrtmodels(
 #                            '    %s = fields.Selection(%s, %s)\n' % (
@@ -270,18 +272,30 @@ class GeneratedsSuper(object):
                 else:
                     sys.stderr.write('Unhandled simple type: %s %s\n' % (
                         name, data_type, ))
-            else:
+
+            elif not Defined_simple_type_table.get(data_type):
                 mapped_type = unique_name_map.get(clean_data_type)
                 if mapped_type is not None:
-                    clean_data_type = mapped_type
-                wrtmodels(
-                    '    %s = models.ForeignKey(\n        "%s%s",\n' % (
-                        name, clean_data_type, model_suffix, ))
-                wrtmodels(
-                    '        related_name="{}_{}_{}",\n'.format(
-                        class_name, name, clean_data_type, ))
-                if is_optional:
+                    clean_data_type = mapped_type.replace('Type', '')
+                    # TODO regexp replace
+                if spec.get_container() == 0: # name in cls._many2one:
                     wrtmodels(
-                        '        blank=True, null=True,\n')
-                wrtmodels('    )\n')
+                    '    %s = fields.Many2one(\n        "%s.%s.%s",\n' % (
+                                field_name, Lib_name, Version,
+                                clean_data_type.lower()))
+                    wrtmodels(
+                        "        %s)\n" % (options))
+                    # TODO is ondelete='cascade' really the exception?
+                else:
+                    wrtmodels(
+                    '    %s = fields.One2many(\n        "%s.%s.%s",\n' % (
+                        field_name, Lib_name, Version, clean_data_type.lower()))
+                    wrtmodels(
+                    '        "%s_%s__%s_id",\n' % (
+                        Lib_name, clean_data_type.lower(), class_name))
+                    wrtmodels(
+                        "        %s\n" % (options,))
+                    # NOTE can we force at least one unless is_optional?
+
+                    wrtmodels('    )\n')
         wrtmodels('\n')
