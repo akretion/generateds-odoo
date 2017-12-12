@@ -174,28 +174,38 @@ class GeneratedsSuper(object):
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, unique_name_map, class_suffixes):
+            cls, wrtmodels, unique_name_map, class_suffixes,
+            implicit_many2ones):
         if class_suffixes:
             model_suffix = '_model'
         else:
             model_suffix = ''
-        class_name = unique_name_map.get(cls.__name__).replace('Type', '')
+        class_name = unique_name_map.get(cls.__name__)
+        odoo_class_name = class_name.replace('Type', '')
         # TODO regexp replace
-        field_prefix = "%s_%s__" % (Lib_name, class_name.lower())
+        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
 
         wrtmodels('\nclass %s%s(sped.SpedBase):\n' % (
-            class_name, model_suffix, ))
+            odoo_class_name, model_suffix, ))
         if cls.__doc__:
             wrtmodels('    _description = """%s"""\n' % (cls.__doc__, ))
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
-                                                class_name.lower(), ))
+                                                odoo_class_name.lower(), ))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
         wrtmodels("    _concrete_impls = []\n\n")
+#        if cls.superclass is not None:
+#            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
+#                cls.superclass.__name__, cls.superclass.__name__,
+#                model_suffix, ))
 
-        if cls.superclass is not None:
-            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
-                cls.superclass.__name__, cls.superclass.__name__,
-                model_suffix, ))
+        if class_name in implicit_many2ones:
+            comodel = implicit_many2ones[class_name][0][0]
+            target_field = implicit_many2ones[class_name][0][1]
+            wrtmodels(
+                            '    %s%s_%s_id = fields.Many2one("%s.%s.%s")\n' % (
+                                field_prefix, comodel, target_field, Lib_name, Version,
+                                comodel.lower()))
+
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
@@ -223,10 +233,10 @@ class GeneratedsSuper(object):
                 options = 'string="""%s""", xsd_required=True' % (string,)
 
             if choice != None:
-                options = """choice='%s', %s""" % (choice, options)
+                options = """choice='%s',\n        %s""" % (choice, options)
 
             if help_attr:
-                options = "%s, %s" % (options, help_attr,)
+                options = "%s,\n        %s" % (options, help_attr,)
 
             if data_type in Simple_type_table:
                 if data_type in Integer_type_table:
@@ -265,9 +275,8 @@ class GeneratedsSuper(object):
                              ).get_enumeration_():
                             enum_type = Defined_simple_type_table[original_st]
                             enum = enum_type.get_enumeration_()
-#                    False: # supermod.STEnumerations.get(name):
                             wrtmodels(
-                                '    %s = fields.Selection(%s, %s)\n' % (
+                                '    %s = fields.Selection(%s,\n        %s)\n' % (
                                 field_name, original_st, options, ))
                     else:
                         wrtmodels(
@@ -295,8 +304,9 @@ class GeneratedsSuper(object):
                     '    %s = fields.One2many(\n        "%s.%s.%s",\n' % (
                         field_name, Lib_name, Version, clean_data_type.lower()))
                     wrtmodels(
-                    '        "%s_%s__%s_id",\n' % (
-                        Lib_name, clean_data_type.lower(), class_name))
+                    '        "%s_%s__%s_%s_id",\n' % (
+                        Lib_name, clean_data_type.lower(), field_name,
+                        odoo_class_name))
                     wrtmodels(
                         "        %s\n" % (options,))
                     # NOTE can we force at least one unless is_optional?
