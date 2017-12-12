@@ -321,29 +321,33 @@ def get_simple_name_type(node):
     name = node.get('name')
     enumeration = None
     description = ""
+
+    descriptions = node.xpath(
+        "./xs:annotation/xs:documentation/text()",
+        namespaces=Nsmap)
+
+    if descriptions:
+        description = descriptions[0]
+
+    else:
+        # eventually the description is not carried by the SimpleType
+        # but by its parent element. When the SimpleType is used only in
+        # a specific element we can use the element description
+        elements = node.xpath("//*[@type='%s']" % (name,), namespaces=Nsmap)
+        if len(elements) == 1:
+            descriptions = elements[0].xpath(
+                "./xs:annotation/xs:documentation/text()",
+                namespaces=Nsmap)
+
+            if descriptions:
+                description = descriptions[0]
+
     # Is it a restriction?
     if name is not None:
         nodes = node.xpath('.//xs:restriction', namespaces=Nsmap)
         if nodes:
             restriction = nodes[0]
             type_name = restriction.get('base')
-
-            descriptions = node.xpath(
-                "./xs:annotation/xs:documentation/text()",
-                namespaces=Nsmap)
-            if descriptions:
-                    description = descriptions[0]
-# NOTE eventually when there is no Simple Type documentation
-# we may find documentation in some field where it is used.
-#            elif child:
-#                elem = tree.xpath("//xs:element[@name='%s']" % (key),
-#                    namespaces=ns, n=base)
-#                if elem:
-#                    descriptions = elem[0].xpath("./xs:annotation/xs:documentation/text()",
-#                                namespaces=ns, n=typeName, b=base)
-#                    if descriptions:
-#                        SimpleTypes[key] = descriptions[0]
-
             for restriction in nodes:
                 values = restriction.xpath("./xs:enumeration/@value",
                                                 namespaces=Nsmap)
