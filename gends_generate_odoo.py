@@ -21,6 +21,7 @@ import os
 import getopt
 import importlib
 import traceback
+from generateds_definedsimpletypes import Defined_simple_type_table
 
 
 #
@@ -100,14 +101,16 @@ def generate_model(options, module_name):
     unique_name_map = make_unique_name_map(supermod.__all__)
     wrtmodels('# -*- coding: utf-8 -*-\n\n')
     # TODO put generation header like in lib
-    wrtmodels('from odoo import models, fields\n')
-    wrtmodels('from . import sped\n') # FIXME parametrable?
+    wrtmodels('from odoo import fields\n')
+    wrtmodels('from . import sped\n\n\n') # FIXME parametrable?
 
-
-# TODO
-#    for key in supermod.STEnumerations:
-#        wrtmodels('"""%s"""\n' % (supermod.SimpleTypes[key]))
-#        wrtmodels('%s = %s\n\n' % (key, [(i, i) for i in supermod.STEnumerations[key]]))
+    for type_name in sorted(Defined_simple_type_table.keys()):
+        descr = Defined_simple_type_table[type_name]
+        if descr.get_enumeration_():
+            if len(descr.get_descr_()) > 0:
+                wrtmodels('"""%s"""\n' % (descr.get_descr_()))
+            wrtmodels('%s = %s\n' % (type_name,
+                                       descr.get_enumeration_()))
 
     wrtmodels('\n')
     for class_name in supermod.__all__:

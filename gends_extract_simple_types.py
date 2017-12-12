@@ -33,10 +33,11 @@ Nsmap = {
 # Classes
 
 class TypeDescriptor(object):
-    def __init__(self, name, type_name=None):
+    def __init__(self, name, type_name=None, descr=None):
         self.name_ = name
         self.type_name_ = type_name
         self.type_obj_ = None
+        self.descr_ = descr
 
     def __str__(self):
         return '<%s -- name: %s type: %s>' % (
@@ -50,6 +51,9 @@ class TypeDescriptor(object):
         self.name_ = name
     name = property(get_name_, set_name_)
 
+    def get_descr_(self):
+        return self.descr_
+
     def get_type_name_(self):
         return self.type_name_
 
@@ -87,15 +91,25 @@ class ComplexTypeDescriptor(TypeDescriptor):
 
 
 class SimpleTypeDescriptor(TypeDescriptor):
-    def __init__(self, name, type_name):
-        super(SimpleTypeDescriptor, self).__init__(name, type_name)
+    def __init__(self, name, type_name, enum=None, descr=None):
+        self.enumeration_ = enum
+        super(SimpleTypeDescriptor, self).__init__(name, type_name, descr)
+
+    def get_enumeration_(self):
+        return self.enumeration_
+
+
 
 Header_template = """
+# -*- coding: utf-8 -*-
+
+
 class TypeDescriptor(object):
-    def __init__(self, name, type_name=None):
+    def __init__(self, name, type_name=None, descr=None):
         self.name_ = name
         self.type_name_ = type_name
         self.type_obj_ = None
+        self.descr_ = descr
     def __str__(self):
         return '<%s -- name: %s type: %s>' % (self.__class__.__name__,
             self.name, self.type_name,)
@@ -104,6 +118,8 @@ class TypeDescriptor(object):
     def set_name_(self, name):
         self.name_ = name
     name = property(get_name_, set_name_)
+    def get_descr_(self):
+        return self.descr_
     def get_type_name_(self):
         return self.type_name_
     def set_type_name_(self, type_name):
@@ -132,9 +148,12 @@ class ComplexTypeDescriptor(TypeDescriptor):
     attributes = property(get_attributes_, set_attributes_)
 
 class SimpleTypeDescriptor(TypeDescriptor):
-    def __init__(self, name, type_name):
-        super(SimpleTypeDescriptor, self).__init__(name, type_name)
+    def __init__(self, name, type_name, enum=None, descr=None):
+        self.enumeration_ = enum
+        super(SimpleTypeDescriptor, self).__init__(name, type_name, descr)
 
+    def get_enumeration_(self):
+        return self.enumeration_
 """
 
 
@@ -230,8 +249,8 @@ def extract(root, descriptors, outfile):
     # Process top level simpleTypes.  Resolve the base types.
     nodes = root.xpath('xs:simpleType', namespaces=Nsmap)
     for node in nodes:
-        name, type_name = get_simple_name_type(node)
-        descriptor = SimpleTypeDescriptor(name, type_name)
+        name, type_name, enum, descr = get_simple_name_type(node)
+        descriptor = SimpleTypeDescriptor(name, type_name, enum, descr)
         unresolved[name] = descriptor
     resolved = resolve_simple_types(unresolved)
     export_defined_simple_types(outfile, resolved)
@@ -246,8 +265,15 @@ def export_defined_simple_types(outfile, resolved):
     for descriptor in list(resolved.values()):
         name = descriptor.name
         prefix, type_name = get_prefix_name(descriptor.type_name)
-        wrt("    '%s': SimpleTypeDescriptor('%s', '%s'),\n" % (
-            name, name, type_name, ))
+        if descriptor.get_enumeration_():
+            wrt("""    '%s': SimpleTypeDescriptor('%s', '%s',
+        %s,
+        \"\"\"%s\"\"\"),\n""" % (
+                name, name, type_name, descriptor.get_enumeration_(),
+                descriptor.get_descr_()))
+        else:
+            wrt("    '%s': SimpleTypeDescriptor('%s', '%s'),\n" % (
+                name, name, type_name))
     wrt('}\n\n')
 
 
@@ -293,12 +319,39 @@ def resolve_1_simple_type(descriptor, resolved, unresolved):
 def get_simple_name_type(node):
     type_name = None
     name = node.get('name')
+    enumeration = None
+    description = ""
     # Is it a restriction?
     if name is not None:
         nodes = node.xpath('.//xs:restriction', namespaces=Nsmap)
         if nodes:
             restriction = nodes[0]
             type_name = restriction.get('base')
+
+            descriptions = node.xpath(
+                "./xs:annotation/xs:documentation/text()",
+                namespaces=Nsmap)
+            if descriptions:
+                    description = descriptions[0]
+# NOTE eventually when there is no Simple Type documentation
+# we may find documentation in some field where it is used.
+#            elif child:
+#                elem = tree.xpath("//xs:element[@name='%s']" % (key),
+#                    namespaces=ns, n=base)
+#                if elem:
+#                    descriptions = elem[0].xpath("./xs:annotation/xs:documentation/text()",
+#                                namespaces=ns, n=typeName, b=base)
+#                    if descriptions:
+#                        SimpleTypes[key] = descriptions[0]
+
+            for restriction in nodes:
+                values = restriction.xpath("./xs:enumeration/@value",
+                                                namespaces=Nsmap)
+                # TODO try heuristics to extract
+                # selection labels from annotations
+                if len(values) > 0:
+                    enumeration = [(v, v) for v in values]
+
     # Not a restriction.  Try list.
     if type_name is None:
         nodes = node.xpath('.//xs:list', namespaces=Nsmap)
@@ -314,7 +367,7 @@ def get_simple_name_type(node):
                 member_types = member_types.split()
                 if member_types:
                     type_name = member_types[0]
-    return name, type_name
+    return name, type_name, enumeration, description
 
 
 def get_prefix_name(tag):

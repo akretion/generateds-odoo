@@ -260,11 +260,15 @@ class GeneratedsSuper(object):
                         wrtmodels(
                             '    %s = fields.Monetary(%s)\n' % (
                                 field_name, options, ))
-                    if False: # supermod.STEnumerations.get(name):
-                        pass # TODO
-#                        wrtmodels(
-#                            '    %s = fields.Selection(%s, %s)\n' % (
-#                                field_name, name, options, ))
+                    elif Defined_simple_type_table.get(original_st) \
+                        and (Defined_simple_type_table[original_st]
+                             ).get_enumeration_():
+                            enum_type = Defined_simple_type_table[original_st]
+                            enum = enum_type.get_enumeration_()
+#                    False: # supermod.STEnumerations.get(name):
+                            wrtmodels(
+                                '    %s = fields.Selection(%s, %s)\n' % (
+                                field_name, original_st, options, ))
                     else:
                         wrtmodels(
                             '    %s = fields.Char(%s)\n' % (
