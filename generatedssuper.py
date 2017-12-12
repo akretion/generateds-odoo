@@ -206,6 +206,25 @@ class GeneratedsSuper(object):
                                 field_prefix, comodel, target_field, Lib_name, Version,
                                 comodel.lower()))
 
+        choice_selectors = {}
+        for spec in cls.member_data_items_:
+            name = spec.get_name()
+            choice = spec.get_choice()
+            if choice != None:
+                if choice not in choice_selectors.keys():
+                    choice_selectors[choice] = []
+                choice_selectors[choice].append(name)
+        for k, v in choice_selectors.items():
+            # TODO can we have a better label?
+            wrtmodels(
+                      """    %schoice%s = fields.Selection([""" % (
+                          field_prefix, k,))
+            for i in v:
+                wrtmodels("""\n        (%s%s, %s),""" % (field_prefix, i, i))
+            label="/".join(i for i in v)
+            wrtmodels("""],\n        "%s",\n        default="%s%s")\n""" % (
+                label, field_prefix, v[0]))
+
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
