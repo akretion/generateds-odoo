@@ -113,11 +113,29 @@ def generate_model(options, module_name):
                                        descr.get_enumeration_()))
 
     wrtmodels('\n')
+
+    # collect implicit m2o related to explicit o2m:
+    implicit_many2ones = {}
+    for class_name in supermod.__all__:
+        if hasattr(supermod, class_name):
+            cls = getattr(supermod, class_name)
+            for spec in cls.member_data_items_:
+                if spec.get_container() == 1:
+                    name = spec.get_name()
+                    related = spec.get_data_type_chain()
+                    if isinstance(related, list):
+                        related = related[0]
+                    if implicit_many2ones.get(related):
+                        implicit_many2ones[related].append((class_name, name))
+                    else:
+                        implicit_many2ones[related] = [(class_name, name)]
+
     for class_name in supermod.__all__:
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
-                wrtmodels, unique_name_map, options.class_suffixes)
+                wrtmodels, unique_name_map, options.class_suffixes,
+                implicit_many2ones)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
     first_time = True
