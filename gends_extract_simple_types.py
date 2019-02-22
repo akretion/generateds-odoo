@@ -248,6 +248,8 @@ def extract(root, descriptors, outfile):
     unresolved = {}
     # Process top level simpleTypes.  Resolve the base types.
     nodes = root.xpath('xs:simpleType', namespaces=Nsmap)
+    # TODO get parent and if it is schema (or via import),
+    # then offer an option to export it in a common file
     for node in nodes:
         name, type_name, enum, descr = get_simple_name_type(node)
         descriptor = SimpleTypeDescriptor(name, type_name, enum, descr)
