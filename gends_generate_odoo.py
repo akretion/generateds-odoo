@@ -16,12 +16,14 @@ Options:
 
 
 from __future__ import print_function
+import time
 import sys
 import os
 import getopt
 import importlib
 import traceback
 from generateds_definedsimpletypes import Defined_simple_type_table
+from generateDS import wrap_text
 
 
 #
@@ -65,6 +67,17 @@ class Writer(object):
         self.outfile.close()
 
 
+TEMPLATE_HEADER = """\
+# -*- coding: utf-8 -*-
+
+#
+# Generated {tstamp} by generateDS.py{version}.
+# Python {pyversion}
+#
+from odoo import fields
+from .. import spec_models
+"""
+
 #
 # Functions
 #
@@ -99,10 +112,17 @@ def generate_model(options, module_name):
     models_writer = Writer(models_file_name)
     wrtmodels = models_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
-    wrtmodels('# -*- coding: utf-8 -*-\n\n')
-    # TODO put generation header like in lib
-    wrtmodels('from odoo import fields\n')
-    wrtmodels('from . import sped\n\n\n') # FIXME parametrable?
+
+
+    tstamp = time.ctime()
+    version = "(Akretion's branch)"
+    current_working_directory = os.path.split(os.getcwd())[1]
+
+    header = TEMPLATE_HEADER.format(
+        tstamp=tstamp,
+        version=version,
+        pyversion=sys.version.replace('\n', ' '))
+    wrtmodels(header)
 
     for type_name in sorted(Defined_simple_type_table.keys()):
         descr = Defined_simple_type_table[type_name]
@@ -110,10 +130,19 @@ def generate_model(options, module_name):
             enum = descr.get_enumeration_()
 
             if len(descr.get_descr_()) > 0:
-                descr = "\n# ".join(descr.get_descr_().splitlines())
-                wrtmodels("# %s" % (descr,))
+                descr = "\n# ".join(wrap_text(descr.get_descr_(),
+                                              0, 73).splitlines())
+                wrtmodels("\n# %s" % (descr,))
 
-            wrtmodels('\n%s = %s\n' % (type_name, enum))
+            wrtmodels('\n%s = [' % (type_name,))
+            for i in enum:
+                value = i[0][0:32] # FIXME for CCe, wrap it like label instead
+                offset = len(value) + 10
+                label = "\n".join(["%s" % (i,) for i in wrap_text(i[1],
+                                                offset, 75 - offset).splitlines()])
+
+                wrtmodels("""\n    ("%s", %s),""" % (value, label))
+            wrtmodels("\n]\n")
 
     # collect implicit m2o related to explicit o2m:
     implicit_many2ones = {}
