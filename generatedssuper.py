@@ -1,8 +1,7 @@
-
-from __future__ import print_function
+from  __future__ import print_function
 import sys
 from generateds_definedsimpletypes import Defined_simple_type_table
-from generateDS import AnyTypeIdentifier, mapName, cleanupName
+from generateDS import AnyTypeIdentifier, mapName, cleanupName, wrap_text
 
 #
 # Globals
@@ -77,9 +76,11 @@ Integer_type_table = {
     'unsignedShort': None,
 }
 Float_type_table = {
-    'decimal': None,
     'float': None,
     'double': None,
+}
+Decimal_type_table = {
+    'decimal': None,
 }
 String_type_table = {
     'string': None,
@@ -156,21 +157,26 @@ class GeneratedsSuper(object):
         return prefix, name
 
     @classmethod
-    def extract_string_help_select(cls, spec):
-        string = spec.get_name()
+    def extract_string_help_select(cls, field_name, doc):
         help_attr = None
-        if spec.get_documentation():
-            doc = spec.get_documentation()
-            help_attr = 'help="""%s"""' % (doc)
-            if len(doc) < 64: # then use help for string
-                string = doc
-            elif len(doc.split(".")[0]) < 64:
-                string = doc.split(".")[0]
-            elif len(doc.split(",")[0]) < 64:
-                string = doc.split(",")[0]
-            elif len(doc.split("-")[0]) < 64:
-                string = doc.split("-")[0]
-        return string, help_attr, []
+        string = field_name
+        if doc:
+            string = doc.splitlines()[0]
+            if len(string) > 32 and len(string.split(".")[0]) < 64:
+                string = string.split(".")[0].strip()
+            if len(string) > 32 and len(string.split(",")[0]) < 64:
+                string = string.split(",")[0].strip()
+            if len(string) > 32 and len(string.split("-")[0]) < 64:
+                string = string.split("-")[0].strip()
+            if len(string) > 32 and len(string.split("(")[0]) < 64:
+                string = string.split("(")[0].strip()
+            string.replace("\"", "'")
+            if len(string) > 63:
+                string = field_name
+
+            doc = wrap_text(doc, 14, 63)
+            help_attr = 'help=%s' % (doc)
+        return string, help_attr
 
     @classmethod
     def generate_model_(
@@ -183,27 +189,32 @@ class GeneratedsSuper(object):
         class_name = unique_name_map.get(cls.__name__)
         odoo_class_name = class_name.replace('Type', '')
         # TODO regexp replace
-        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
+#        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
+        field_prefix = "%s_" % (Lib_name,)
 
-        wrtmodels('\nclass %s%s(sped.SpedBase):\n' % (
+        wrtmodels('\n\nclass %s%s(spec_models.AbstractSpecMixin):\n' % (
             odoo_class_name, model_suffix, ))
         if cls.__doc__:
-            wrtmodels('    _description = """%s"""\n' % (cls.__doc__, ))
+            wrtmodels('    _description = %s\n' % (
+                wrap_text(cls.__doc__, 20, 58), ))
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
                                                 odoo_class_name.lower(), ))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
-        wrtmodels("    _concrete_impls = []\n\n")
+        wrtmodels("    _concrete_class = None\n")
+        wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
+                  (Lib_name, cls.member_data_items_[0].get_name()))
 #        if cls.superclass is not None:
 #            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
 #                cls.superclass.__name__, cls.superclass.__name__,
 #                model_suffix, ))
 
         if class_name in implicit_many2ones:
-            comodel = implicit_many2ones[class_name][0][0]
+            comodel = implicit_many2ones[class_name][0][0].replace("Type", "")
             target_field = implicit_many2ones[class_name][0][1]
-            wrtmodels('    %s%s_%s_id = fields.Many2one("%s.%s.%s")\n' % (
-                      field_prefix, comodel, target_field, Lib_name, Version,
-                      comodel.lower()))
+            wrtmodels(
+                '    %s%s_%s_id = fields.Many2one(\n        "%s.%s.%s")\n' % (
+                    field_prefix, target_field, comodel, Lib_name, Version,
+                    comodel.lower()))
 
         choice_selectors = {}
         for spec in cls.member_data_items_:
@@ -217,10 +228,16 @@ class GeneratedsSuper(object):
             # TODO can we have a better label?
             wrtmodels(
                       """    %schoice%s = fields.Selection([""" % (
-                          field_prefix, k,))
-            for i in v:
-                wrtmodels("""\n        (%s%s, %s),""" % (field_prefix, i, i))
+                          field_prefix, k,)) # TODO duplicate name?
+#            for i in v:
+#                wrtmodels("\n        ('%s%s', '%s')," % (field_prefix, i, i))
+
+            items = ",\n        ".join(
+                ["('%s%s', '%s')" % (field_prefix, i, i) for i in v])
+            wrtmodels("\n        %s" % (items,))
             label="/".join(i for i in v)
+            if len(label) > 50:
+                label="%s..." % (label[0:50])
             wrtmodels("""],\n        "%s",\n        default="%s%s")\n""" % (
                 label, field_prefix, v[0]))
 
@@ -243,12 +260,17 @@ class GeneratedsSuper(object):
             clean_data_type = mapName(cleanupName(data_type))
             if data_type == AnyTypeIdentifier:
                 data_type = 'string'
-            string, help_attr, select = cls.extract_string_help_select(spec)
+            string, help_attr = cls.extract_string_help_select(
+                spec.get_name(), spec.get_documentation())
 
             if is_optional:
-                options = 'string="""%s"""' % (string,)
+                options = 'string="%s"' % (string,)
             else:
-                options = 'string="""%s""", xsd_required=True' % (string,)
+                if (len(string) + len(field_name) > 30):
+                    options = 'string="%s",\n        xsd_required=True' % (
+                        string,)
+                else:
+                    options = 'string="%s", xsd_required=True' % (string,)
 
             if choice != None:
                 options = """choice='%s',\n        %s""" % (choice, options)
@@ -257,49 +279,57 @@ class GeneratedsSuper(object):
             if help_attr:
                 options = "%s,\n        %s" % (options, help_attr,)
 
+            if len(spec.get_data_type_chain()) == 0:
+                original_st = data_type
+            else:
+                original_st = spec.get_data_type_chain()[0]
+
             if data_type in Simple_type_table:
                 if data_type in Integer_type_table:
-                    wrtmodels('    %s = fields.Integer(%s)\n' % (
+                    wrtmodels('    %s = fields.Integer(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in Float_type_table:
-                    wrtmodels('    %s = fields.Float(%s)\n' % (
+                    wrtmodels('    %s = fields.Float(\n        %s)\n' % (
                         field_name, options, ))
+                elif data_type in Decimal_type_table or 'TDec_' in original_st:
+                    if 'TDec_' in original_st:
+                        digits = original_st[8]
+                        if len(string) > 50:
+                            options = "\n        %s" % (options,)
+                        options = "digits=%s, %s" % (digits, options)
+                    wrtmodels(
+                        '    %s = fields.Monetary(\n        %s)\n' % (
+                            field_name, options))
                 elif data_type in Date_type_table:
-                    wrtmodels('    %s = fields.Date(%s)\n' % (
+                    wrtmodels('    %s = fields.Date(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in DateTime_type_table:
-                    wrtmodels('    %s = fields.Datetime(%s)\n' % (
+                    wrtmodels('    %s = fields.Datetime(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in Time_type_table:
                     sys.stderr.write('Unhandled simple type: %s %s\n' % (
                         field_name, data_type, ))
-                    wrtmodels('    %s = fields.TimeField(%s)\n' % (
+                    wrtmodels('    %s = fields.TimeField(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in Boolean_type_table:
-                    wrtmodels('    %s = fields.Boolean(%s)\n' % (
+                    wrtmodels('    %s = fields.Boolean(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in String_type_table:
-                    if len(spec.get_data_type_chain()) == 0:
-                        original_st = data_type
-                    else:
-                        original_st = spec.get_data_type_chain()[0]
-                    if 'TDec_' in original_st:
-                        digits = original_st[8]
-                        options = "digits=%s,\n        %s" % (digits, options)
+                   if Defined_simple_type_table.get(original_st) \
+                            and (Defined_simple_type_table[original_st]
+                            ).get_enumeration_():
+                        enum_type = Defined_simple_type_table[original_st]
+                        string, help_attr = cls.extract_string_help_select(
+                           field_name,
+                           enum_type.get_descr_() or spec.get_documentation())
+                        options = '%s,\n        %s' % (options_nohelp,
+                            help_attr)
                         wrtmodels(
-                            '    %s = fields.Monetary(%s)\n' % (
-                                field_name, options, ))
-                    elif Defined_simple_type_table.get(original_st) \
-                        and (Defined_simple_type_table[original_st]
-                             ).get_enumeration_():
-                            enum_type = Defined_simple_type_table[original_st]
-                            enum = enum_type.get_enumeration_()
-                            options = "%s,\n        help=%s" % (options_nohelp,
-                                enum_type.get_descr_())
-                            wrtmodels(
-                                '    %s = fields.Selection(%s,\n        %s)\n' % (
-                                field_name, original_st, options, ))
-                    else:
+                            '    %s = fields.Selection(\n        %s,\n        %s)\n' % (
+                            field_name, original_st, options, ))
+                   else:
+#                        if len(string) + len(field_name) > 51:
+                        options = "\n        %s" % (options,)
                         wrtmodels(
                             '    %s = fields.Char(%s)\n' % (
                                 field_name, options, )) # TODO size
@@ -325,12 +355,10 @@ class GeneratedsSuper(object):
                     '    %s = fields.One2many(\n        "%s.%s.%s",\n' % (
                         field_name, Lib_name, Version, clean_data_type.lower()))
                     wrtmodels(
-                    '        "%s_%s__%s_%s_id",\n' % (
-                        Lib_name, clean_data_type.lower(), field_name,
-                        odoo_class_name))
+                    '        "%s_%s_id",\n' % (
+                        field_name, odoo_class_name))
                     wrtmodels(
                         "        %s\n" % (options,))
                     # NOTE can we force at least one unless is_optional?
 
                     wrtmodels('    )\n')
-        wrtmodels('\n')
