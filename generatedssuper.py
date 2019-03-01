@@ -1,7 +1,8 @@
 from  __future__ import print_function
 import sys
 from generateds_definedsimpletypes import Defined_simple_type_table
-from generateDS import AnyTypeIdentifier, mapName, cleanupName, wrap_text
+from generateDS import AnyTypeIdentifier, mapName, cleanupName
+from wrap_text import wrap_text
 
 #
 # Globals
