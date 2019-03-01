@@ -8,12 +8,12 @@ from __future__ import print_function
 import sys
 import os
 import argparse
+from importlib import import_module
 if sys.version_info.major == 2:
     from StringIO import StringIO as stringio
 else:
     from io import StringIO as stringio
 from lxml import etree
-import process_includes
 
 
 #
@@ -226,6 +226,8 @@ def extract_descriptors(args):
         os.path.abspath(os.path.curdir),
         args.infilename)
     infile = stringio()
+    sys.path.append(args.path)
+    process_includes = import_module('process_includes')
     process_includes.process_include_files(
         args.infilename, infile,
         inpath=schema_file_name)
@@ -450,6 +452,10 @@ def main():
     parser.add_argument(
         '-f', '--force', action='store_true',
         help='force overwrite of output file without asking')
+    parser.add_argument(
+        '-p', '--path', type=str,
+        default=os.path.abspath(os.path.join(__file__, os.pardir, os.pardir)),
+        help='path to generateDS folder')
     parser.add_argument(
         'infilename', type=str,
         help='input XML Schema file')
