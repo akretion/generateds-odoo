@@ -164,7 +164,7 @@ def generate_model(options, module_name):
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
-                wrtmodels, unique_name_map, options.class_suffixes,
+                wrtmodels, unique_name_map, options,
                 implicit_many2ones)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
@@ -218,9 +218,9 @@ def main():
     args = sys.argv[1:]
     try:
         opts, args = getopt.getopt(
-            args, 'hfs:', [
+            args, 'hfs:d:l:x:p:', [
                 'help', 'force',
-                'no-class-suffixes', ])
+                'no-class-suffixes', 'directory', 'path'])
     except:
         usage()
     options = ProgramOptions()
@@ -233,9 +233,18 @@ def main():
             options.force = True
         elif opt == '--no-class-suffixes':
             options.class_suffixes = False
+        elif opt in ('-p', '--path'):
+            options.path = val
+        elif opt in ('-d', '--directory'):
+            options.output_dir = val
+        elif opt in ('-l', '--schema_name'):
+            options.schema_name = val
+        elif opt in ('-x', '--version'):
+            options.version = val
     if len(args) != 1:
         usage()
     module_name = args[0]
+    options.module_name = module_name
     generate_model(options, module_name)
 
 

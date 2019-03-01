@@ -12,9 +12,6 @@ from wrap_text import wrap_text
 # of generatedssuper.py.
 Generate_DS_Super_Marker_ = None
 
-Lib_name = 'nfe'
-Version = 'v3_10'
-
 #
 # Tables of builtin types
 Simple_type_table = {
@@ -181,8 +178,11 @@ class GeneratedsSuper(object):
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, unique_name_map, class_suffixes,
+            cls, wrtmodels, unique_name_map, options,
             implicit_many2ones):
+        class_suffixes = options.class_suffixes
+        Lib_name = options.schema_name
+        Version = options.version
         if class_suffixes:
             model_suffix = '_model'
         else:
