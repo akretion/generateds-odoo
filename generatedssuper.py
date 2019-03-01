@@ -249,6 +249,10 @@ class GeneratedsSuper(object):
             data_type = spec.get_data_type()
             is_optional = spec.get_optional()
             prefix, data_type = cls.get_prefix_name(data_type)
+            if hasattr(spec, 'get_documentation'):
+                spec_doc = spec.get_documentation()
+            else:
+                spec_doc = name
             if data_type in Defined_simple_type_table:
                 data_type = (Defined_simple_type_table[data_type]
                              ).get_type_name_()
@@ -262,7 +266,7 @@ class GeneratedsSuper(object):
             if data_type == AnyTypeIdentifier:
                 data_type = 'string'
             string, help_attr = cls.extract_string_help_select(
-                spec.get_name(), spec.get_documentation())
+                spec.get_name(), spec_doc)
 
             if is_optional:
                 options = 'string="%s"' % (string,)
@@ -322,7 +326,7 @@ class GeneratedsSuper(object):
                         enum_type = Defined_simple_type_table[original_st]
                         string, help_attr = cls.extract_string_help_select(
                            field_name,
-                           enum_type.get_descr_() or spec.get_documentation())
+                           enum_type.get_descr_() or spec_doc)
                         options = '%s,\n        %s' % (options_nohelp,
                             help_attr)
                         wrtmodels(
