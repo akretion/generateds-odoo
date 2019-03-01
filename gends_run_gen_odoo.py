@@ -20,6 +20,7 @@ Options:
     --no-class-suffixes
                     Do not add suffix "_model" and _form" to
                     generated class names.
+    -d, --directory Output directory
 Examples:
     python gends_run_gen_odoo.py my_schema.xsd
     python gends_run_gen_odoo.py -f -p ../generateDS.py my_other_schema.xsd
@@ -57,6 +58,8 @@ class GenerateDjangoError(Exception):
 
 def generate(options, schema_file_name):
     schema_name_stem = os.path.splitext(os.path.split(schema_file_name)[1])[0]
+    # NOTE: a file like name.v4.xsd with double dot won't generate a valid .py
+    schema_name_stem = schema_name_stem.replace('.', '')
     bindings_file_name = '%slib.py' % (schema_name_stem, )
     bindings_file_stem = os.path.splitext(bindings_file_name)[0]
     model_file_name = 'models.py'
@@ -79,26 +82,50 @@ def generate(options, schema_file_name):
     args = (
         options['path'],
         '-f',
-        '-o', '%s' % (bindings_file_name, ),
+        '-o', "%s/%s" % (options['output_dir'], bindings_file_name),
         '--member-specs=list',
         schema_file_name,
     )
     if not run_cmd(options, args):
         return
     args = (
-        './gends_extract_simple_types.py', '-f',
+        "%s/gends_extract_simple_types.py" % (os.environ['ODOO_GEN_HOME']),
+        '-f',
+        '-p',
+        options['path'].replace('/generateDS.py', ''),  # TODO does it work?
+        '-o',
+        "%s/%s" % (options['output_dir'], 'generateds_definedsimpletypes.py'),
         schema_file_name,
     )
     if not run_cmd(options, args):
         return
     if options['class_suffixes']:
         args = (
-            './gends_generate_odoo.py', '-f',
+            "%s/gends_generate_odoo.py" % (os.environ['ODOO_GEN_HOME']),
+            '-f',
+            '-p',
+            options['path'].replace('/generateDS.py', ''),  # TODO does it work
+            '-l',
+            options['schema_name'],
+            '-x',
+            options['version'],
+            '-d',
+            options['output_dir'],
             bindings_file_stem,
         )
     else:
         args = (
-            './gends_generate_odoo.py', '-f', '--no-class-suffixes',
+            "%s/gends_generate_odoo.py" % (os.environ['ODOO_GEN_HOME']),
+            '-f',
+            '-p',
+            options['path'].replace('/generateDS.py', ''),  # TODO does it work
+            '-l',
+            options['schema_name'],
+            '-x',
+            options['version'],
+            '-d',
+            options['output_dir'],
+            '--no-class-suffixes',
             bindings_file_stem,
         )
     if not run_cmd(options, args):
@@ -154,10 +181,11 @@ def usage():
 def main():
     args = sys.argv[1:]
     try:
-        opts, args = getopt.getopt(args, 'hvfp:s', [
+        opts, args = getopt.getopt(args, 'hvfp:l:x:d:s', [
             'help', 'verbose', 'script',
             'force', 'path-to-generateDS-script=',
-            'no-class-suffixes',
+            'schema_name', 'version',
+            'directory=', 'no-class-suffixes'
         ])
     except:
         usage()
@@ -180,6 +208,12 @@ def main():
             options['path'] = val
         elif opt == '--no-class-suffixes':
             options['class_suffixes'] = False
+        elif opt in ('-d', '--directory'):
+            options['output_dir'] = val
+        elif opt in ('-l', '--schema_name'):
+            options['schema_name'] = val
+        elif opt in ('-x', '--version'):
+            options['version'] = val
     if not os.path.exists(options['path']):
         sys.exit(
             '\n*** error: Cannot find generateDS.py.  '
