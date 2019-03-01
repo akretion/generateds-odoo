@@ -22,7 +22,6 @@ import os
 import getopt
 import importlib
 import traceback
-from generateds_definedsimpletypes import Defined_simple_type_table
 from wrap_text import wrap_text
 
 
@@ -83,6 +82,8 @@ from .. import spec_models
 #
 
 def generate_model(options, module_name):
+    sys.path.append(options.output_dir)
+    from generateds_definedsimpletypes import Defined_simple_type_table
     global supermod
     try:
         import generatedssuper
@@ -160,12 +161,14 @@ def generate_model(options, module_name):
                     else:
                         implicit_many2ones[related] = [(class_name, name)]
 
+    sys.path.append(options.path)
+    generate_ds = importlib.import_module('generateDS')
     for class_name in supermod.__all__:
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
                 wrtmodels, unique_name_map, options,
-                implicit_many2ones)
+                generate_ds, implicit_many2ones)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
     first_time = True
