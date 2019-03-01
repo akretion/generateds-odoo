@@ -177,7 +177,7 @@ class GeneratedsSuper(object):
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, unique_name_map, options,
+            cls, wrtmodels, wrtsecurity,wrtsecurity, unique_name_map, options,
             generate_ds, implicit_many2ones):
 
         # we pass the generateDS package as an argument to avoid
@@ -211,6 +211,10 @@ class GeneratedsSuper(object):
         wrtmodels("    _concrete_class = None\n")
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
                   (Lib_name, cls.member_data_items_[0].get_name()))
+        wrtsecurity("access_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
+        Lib_name, Version, odoo_class_name.lower(),
+        Lib_name, Version, odoo_class_name.lower(),
+        Lib_name, Version, odoo_class_name.lower().replace('.', '_')))
 #        if cls.superclass is not None:
 #            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
 #                cls.superclass.__name__, cls.superclass.__name__,

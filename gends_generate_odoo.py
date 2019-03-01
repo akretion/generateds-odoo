@@ -46,9 +46,9 @@ class ProgramOptions(object):
 
 
 class Writer(object):
-    def __init__(self, outfilename, stdout_also=False):
+    def __init__(self, outfilename, stdout_also=False, mode='w'):
         self.outfilename = outfilename
-        self.outfile = open(outfilename, 'w')
+        self.outfile = open(outfilename, mode)
         self.stdout_also = stdout_also
         self.line_count = 0
 
@@ -101,7 +101,9 @@ def generate_model(options, module_name):
             'for Odoo support is first on your PYTHONPATH.\n'
         )
     supermod = importlib.import_module(module_name)
-    models_file_name = 'models.py'
+    compact_version = options.version.replace('_', '')
+    new_module_name = module_name.split("_%slib" % (compact_version,))[0]
+    models_file_name = "%s/%s.py" % (options.output_dir, new_module_name)
     if (
             (os.path.exists(models_file_name)
             ) and
@@ -112,6 +114,9 @@ def generate_model(options, module_name):
         sys.exit(1)
     models_writer = Writer(models_file_name)
     wrtmodels = models_writer.write
+    security_writer = Writer("%s/%s" % (options.output_dir,
+                             'ir.model.access.csv'), mode='a')
+    wrtsecurity = security_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
 
 
@@ -167,7 +172,7 @@ def generate_model(options, module_name):
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
-                wrtmodels, unique_name_map, options,
+                wrtmodels, wrtsecurity, unique_name_map, options,
                 generate_ds, implicit_many2ones)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
