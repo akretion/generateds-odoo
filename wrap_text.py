@@ -1,15 +1,45 @@
 import textwrap
 
-def wrap_text(text, indent, width):
-    text = text.replace("\"", "'")
+def wrap_text(text, indent, width=79, initial_indent=4, multi=False):
+    text = text.strip()
+    if not multi:
+        if len(text) + initial_indent + 8 > width or "\n" in text or '"' in text:
+            quote = '"""'
+        else:
+            quote = '"'
+        if text[0] == '"':
+            text = '%s %s' % (quote, text)
+        else:
+            text = '%s%s' % (quote, text)
+        if text[-1] == '"':
+            text = '%s %s' % (text, quote)
+        else:
+            text = '%s%s' % (text, quote)
+    else:
+        width -= 3
+
     wrapped_lines = []
-    for l in text.strip().splitlines():
-        wrapped_lines.append(textwrap.fill(l, width=width,
-                             subsequent_indent='    ',
-                             replace_whitespace=False))
-    text = "\n".join(wrapped_lines)
-    lines = ["u\"%s\"" % (i.strip(),) for i in text.splitlines()]
-    text = ("\n%s" % (" " * indent,)).join(lines)
-    if "\n" in text:
-        text = "(%s)" % (text,)
-    return text
+    first = True
+    for l in text.splitlines():
+        if first:
+            w = width - initial_indent
+            first = False
+        else:
+            if multi:
+                w = width - indent
+            else:
+                w = width
+        lines = textwrap.fill(' '.join(l.strip().split()), width=w,
+                              subsequent_indent=' ' * indent,
+                              replace_whitespace=False).splitlines()
+        wrapped_lines += [i.strip() for i in lines]
+    text = ("\n" + " " * indent).join(wrapped_lines)
+
+    if not multi:
+        return text
+    else:
+        lines = ["\"%s\"" % (i.strip().replace('"', "'"),) for i in text.splitlines()]
+        text = ("\n%s" % (" " * indent,)).join(lines)
+        if "\n" in text:
+            text = "(%s)" % (text,)
+        return text
