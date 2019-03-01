@@ -23,7 +23,7 @@ import getopt
 import importlib
 import traceback
 from generateds_definedsimpletypes import Defined_simple_type_table
-from generateDS import wrap_text
+from wrap_text import wrap_text
 
 
 #
