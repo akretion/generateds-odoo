@@ -111,6 +111,8 @@ def generate(options, schema_file_name):
             options['version'],
             '-d',
             options['output_dir'],
+            '-s',
+            schema_file_name,
             bindings_file_stem,
         )
     else:
@@ -126,6 +128,8 @@ def generate(options, schema_file_name):
             '-d',
             options['output_dir'],
             '--no-class-suffixes',
+            '-s',
+            schema_file_name,
             bindings_file_stem,
         )
     if not run_cmd(options, args):

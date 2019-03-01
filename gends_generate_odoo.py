@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Synopsis:
     Generate Odoo model definitions.
@@ -21,7 +21,11 @@ import sys
 import os
 import getopt
 import importlib
-import traceback
+if sys.version_info.major == 2:
+    from StringIO import StringIO as stringio
+else:
+    from io import StringIO as stringio
+from lxml import etree
 from wrap_text import wrap_text
 
 
@@ -73,6 +77,7 @@ TEMPLATE_HEADER = """\
 # Generated {tstamp} by generateDS.py{version}.
 # Python {pyversion}
 #
+import textwrap
 from odoo import fields
 from .. import spec_models
 """
@@ -145,7 +150,8 @@ def generate_model(options, module_name):
                 value = i[0][0:32] # FIXME for CCe, wrap it like label instead
                 offset = len(value) + 10
                 label = "\n".join(["%s" % (i,) for i in wrap_text(i[1],
-                                                offset, 75 - offset).splitlines()])
+                5, 79,
+                initial_indent=offset).splitlines()])
 
                 wrtmodels("""\n    ("%s", %s),""" % (value, label))
             wrtmodels("\n]\n")
@@ -168,12 +174,28 @@ def generate_model(options, module_name):
 
     sys.path.append(options.path)
     generate_ds = importlib.import_module('generateDS')
+    xsd = parse_preprocess_xsd(options)
+
+    ns = {'xs': 'http://www.w3.org/2001/XMLSchema'}
+    type_nodes = xsd.xpath("//xs:complexType",
+                           namespaces=ns)
+    labels = {}
+    for type_node in type_nodes:
+        labels[type_node.attrib['name']] = {}
+        field_nodes = type_node.xpath(".//xs:element", namespaces=ns)
+        for field in field_nodes:
+            if field.attrib.get('name'):
+                doc = field.xpath(".//xs:documentation",namespaces=ns)
+                if len(doc) > 0:
+                    spec_doc = str(doc[0].text)
+                    labels[type_node.attrib['name']][field.attrib['name']] = spec_doc
+
     for class_name in supermod.__all__:
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
                 wrtmodels, wrtsecurity, unique_name_map, options,
-                generate_ds, implicit_many2ones)
+                generate_ds, implicit_many2ones, labels)
         else:
             sys.stderr.write('class %s not defined\n' % (class_name, ))
     first_time = True
@@ -214,6 +236,22 @@ def make_unique_name(name, unique_name_table, unique_name_set):
     unique_name_set.add(lower_name)
 
 
+def parse_preprocess_xsd(options):
+    schema_file_name = os.path.join(
+        os.path.abspath(os.path.curdir),
+        options.infilename)
+    infile = stringio()
+    process_includes = importlib.import_module('process_includes')
+    process_includes.process_include_files(
+        options.infilename, infile,
+        inpath=schema_file_name)
+    infile.seek(0)
+
+    doc = etree.parse(infile)
+    print(doc.getroot())
+    return doc.getroot()
+
+
 USAGE_TEXT = __doc__
 
 
@@ -226,9 +264,9 @@ def main():
     args = sys.argv[1:]
     try:
         opts, args = getopt.getopt(
-            args, 'hfs:d:l:x:p:', [
-                'help', 'force',
-                'no-class-suffixes', 'directory', 'path'])
+            args, 'hfs:d:l:x:p:s:', [
+                'help', 'force', 'infilename',
+                'no-class-suffixes', 'directory', 'path', 'schema'])
     except:
         usage()
     options = ProgramOptions()
@@ -245,6 +283,8 @@ def main():
             options.path = val
         elif opt in ('-d', '--directory'):
             options.output_dir = val
+        elif opt in ('-s', '--infilename'):
+            options.infilename = val
         elif opt in ('-l', '--schema_name'):
             options.schema_name = val
         elif opt in ('-x', '--version'):
