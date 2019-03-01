@@ -158,27 +158,35 @@ class GeneratedsSuper(object):
         help_attr = None
         string = field_name
         if doc:
-            string = doc.splitlines()[0]
-            if len(string) > 32 and len(string.split(".")[0]) < 64:
-                string = string.split(".")[0].strip()
-            if len(string) > 32 and len(string.split(",")[0]) < 64:
-                string = string.split(",")[0].strip()
-            if len(string) > 32 and len(string.split("-")[0]) < 64:
+            string = ' '.join(doc.strip().splitlines()[0].split())
+            if len(string) > 36 and len(string.split(". ")[0]) < 64:
+                string = string.split(". ")[0].strip()
+            if len(string) > 36 and len(string.split(", ")[0]) < 64:
+                string = string.split(", ")[0].strip()
+            if len(string) > 36 and len(string.split(" (")[0]) < 64:
+                string = string.split(" (")[0].strip()
+            if len(string) > 36 and len(string.split("-")[0]) < 64: # TODO sure?
                 string = string.split("-")[0].strip()
-            if len(string) > 32 and len(string.split("(")[0]) < 64:
-                string = string.split("(")[0].strip()
-            string.replace("\"", "'")
+            if len(string) > 36 and len(string.split(".")[0]) < 64:
+                string = string.split(".")[0].strip()
+            if len(string) > 36 and len(string.split(",")[0]) < 64:
+                string = string.split(",")[0].strip()
+            string = string.replace("\"", "'")
+            if string.endswith(':'):
+                string = string[:-1]
             if len(string) > 63:
                 string = field_name
 
-            doc = wrap_text(doc, 14, 63)
-            help_attr = 'help=%s' % (doc)
+            if string != doc and string != doc[:-1]:
+                # help is only useful it adds more than a ponctuation symbol
+                doc = wrap_text(doc, 14, 79, initial_indent=14, multi=True)
+                help_attr = 'help=%s' % (doc)
         return string, help_attr
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, wrtsecurity,wrtsecurity, unique_name_map, options,
-            generate_ds, implicit_many2ones):
+            cls, wrtmodels, wrtsecurity, unique_name_map, options,
+            generate_ds, implicit_many2ones, labels):
 
         # we pass the generateDS package as an argument to avoid
         # having to import it dynamically from a custom location
@@ -203,8 +211,13 @@ class GeneratedsSuper(object):
         wrtmodels('\n\nclass %s%s(spec_models.AbstractSpecMixin):\n' % (
             odoo_class_name, model_suffix, ))
         if cls.__doc__:
-            wrtmodels('    _description = %s\n' % (
-                wrap_text(cls.__doc__, 20, 58), ))
+            wrtmodels('    %s\n' % (
+                wrap_text(cls.__doc__, 4, 79), ))
+            # setting _description with docstring avoids re-splitting
+            # doc lines again once they were formated for the Python lib
+            wrtmodels("    _description = textwrap.dedent(\"    %s\" % (__doc__,))\n")
+        else:
+            wrtmodels("    _description = '%s'\n" % (odoo_class_name.lower()))
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
                                                 odoo_class_name.lower(), ))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
@@ -260,8 +273,9 @@ class GeneratedsSuper(object):
             data_type = spec.get_data_type()
             is_optional = spec.get_optional()
             prefix, data_type = cls.get_prefix_name(data_type)
-            if hasattr(spec, 'get_documentation'):
-                spec_doc = spec.get_documentation()
+            class_labels = labels[class_name]
+            if class_labels.get(name):
+                spec_doc = class_labels[name]
             else:
                 spec_doc = name
             if data_type in Defined_simple_type_table:
@@ -338,8 +352,9 @@ class GeneratedsSuper(object):
                         string, help_attr = cls.extract_string_help_select(
                            field_name,
                            enum_type.get_descr_() or spec_doc)
-                        options = '%s,\n        %s' % (options_nohelp,
-                            help_attr)
+                        if help_attr:
+                            options = "%s,\n        %s" % (options_nohelp,
+                                                           help_attr)
                         wrtmodels(
                             '    %s = fields.Selection(\n        %s,\n        %s)\n' % (
                             field_name, original_st, options, ))

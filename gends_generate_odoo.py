@@ -248,7 +248,6 @@ def parse_preprocess_xsd(options):
     infile.seek(0)
 
     doc = etree.parse(infile)
-    print(doc.getroot())
     return doc.getroot()
 
 
