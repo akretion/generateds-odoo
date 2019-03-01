@@ -1,7 +1,6 @@
 from  __future__ import print_function
 import sys
 from generateds_definedsimpletypes import Defined_simple_type_table
-from generateDS import AnyTypeIdentifier, mapName, cleanupName
 from wrap_text import wrap_text
 
 #
@@ -179,7 +178,15 @@ class GeneratedsSuper(object):
     @classmethod
     def generate_model_(
             cls, wrtmodels, unique_name_map, options,
-            implicit_many2ones):
+            generate_ds, implicit_many2ones):
+
+        # we pass the generateDS package as an argument to avoid
+        # having to import it dynamically from a custom location
+        # multiple times
+        mapName = generate_ds.mapName
+        cleanupName = generate_ds.cleanupName
+        AnyTypeIdentifier = generate_ds.AnyTypeIdentifier
+
         class_suffixes = options.class_suffixes
         Lib_name = options.schema_name
         Version = options.version
