@@ -93,6 +93,7 @@ def generate_model(options, module_name):
     try:
         import generatedssuper
     except ImportError:
+        import traceback
         traceback.print_exc()
         sys.exit(
             '\n* Error.  Cannot import generatedssuper.py.\n'
@@ -119,11 +120,14 @@ def generate_model(options, module_name):
         sys.exit(1)
     models_writer = Writer(models_file_name)
     wrtmodels = models_writer.write
-    security_writer = Writer("%s/%s" % (options.output_dir,
+    version = options.output_dir.split('/')[-1]
+    security_dir = os.path.abspath(os.path.join(options.output_dir,
+                                                os.pardir, os.pardir,
+                                                'security', version))
+    security_writer = Writer("%s/%s" % (security_dir,
                              'ir.model.access.csv'), mode='a')
     wrtsecurity = security_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
-
 
     tstamp = time.ctime()
     version = "(Akretion's branch)"
