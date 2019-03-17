@@ -59,6 +59,9 @@ class Writer(object):
     def get_count(self):
         return self.line_count
 
+    def get_outfilename(self):
+        return self.outfilename
+
     def write(self, content):
         self.outfile.write(content)
         if self.stdout_also:
@@ -215,7 +218,8 @@ def generate_model(options, module_name):
 #        wrtadmin('admin.site.register(%s%s)\n' % (class_name, model_suffix ))
 #    wrtadmin('\n')
     models_writer.close()
-    print('Wrote %d lines to models.py' % (models_writer.get_count(), ))
+    print('Wrote %d lines to %s' % (models_writer.get_count(),
+                                           models_writer.get_outfilename()))
 
 
 def make_unique_name_map(name_list):
