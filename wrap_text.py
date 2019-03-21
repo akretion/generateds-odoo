@@ -1,9 +1,14 @@
 import textwrap
 
-def wrap_text(text, indent, width=79, initial_indent=4, multi=False):
+
+def wrap_text(text, indent, width=79, initial_indent=4, multi=False,
+              preserve_line_breaks=True, quote=True):
     text = text.strip()
     if not multi:
-        if len(text) + initial_indent + 8 > width or "\n" in text or '"' in text:
+        if not quote:
+            quote = ''
+        elif len(text) + initial_indent + 8 > width or "\n" in text\
+                or '"' in text:
             quote = '"""'
         else:
             quote = '"'
@@ -38,14 +43,17 @@ def wrap_text(text, indent, width=79, initial_indent=4, multi=False):
     if not multi:
         return text
     else:
-        lines = ["\"%s\"" % (i.strip().replace('"', "'"),) for i in text.splitlines()]
+        lines = ["\"%s\"" % (i.strip().replace('"', "'"),)
+                 for i in text.splitlines()]
         lines2 = []
-        first = True
+        c = 0
         for l in lines:
-            if not first:
-                l = "\"\\n%s" % (l[1:100],)
-            else:
-                first = False
+            if preserve_line_breaks:
+                if c != 0:
+                    l = "\"\\n%s" % (l[1:100],)
+            elif c != len(lines) - 1:
+                l = "%s \"" % (l[0:-1])
+            c += 1
             lines2.append(l)
         text = ("\n%s" % (" " * indent,)).join(lines2)
         if "\n" in text:

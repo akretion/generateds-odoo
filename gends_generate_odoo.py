@@ -158,17 +158,15 @@ def generate_model(options, module_name):
 
             if len(descr.get_descr_()) > 0:
                 descr = "\n# ".join(wrap_text(descr.get_descr_(),
-                                              0, 73).splitlines())
+                                              0, 73, quote=False).splitlines())
                 wrtmodels("\n# %s" % (descr,))
 
             wrtmodels('\n%s = [' % (type_name,))
             for i in enum:
                 value = i[0][0:32] # FIXME for CCe, wrap it like label instead
                 offset = len(value) + 10
-                label = "\n".join(["%s" % (i,) for i in wrap_text(i[1],
-                5, 79,
-                initial_indent=offset).splitlines()])
-
+                label = wrap_text(i[1], 5, 79, initial_indent=offset,
+                                  multi=True, preserve_line_breaks=False)
                 wrtmodels("""\n    ("%s", %s),""" % (value, label))
             wrtmodels("\n]\n")
 
