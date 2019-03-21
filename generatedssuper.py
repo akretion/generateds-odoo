@@ -189,7 +189,7 @@ class GeneratedsSuper(object):
     @classmethod
     def generate_model_(
             cls, wrtmodels, wrtsecurity, unique_name_map, options,
-            generate_ds, implicit_many2ones, labels):
+            generate_ds, implicit_many2ones, labels, class_skip):
 
         # we pass the generateDS package as an argument to avoid
         # having to import it dynamically from a custom location
@@ -379,7 +379,7 @@ class GeneratedsSuper(object):
                     clean_data_type = mapped_type.replace('Type', '')
                     # TODO regexp replace
                 if spec.get_container() == 0: # name in cls._many2one:
-                    if clean_data_type in Many2One_skip:
+                    if clean_data_type in class_skip:
                         continue
                     wrtmodels(
                     '    %s = fields.Many2one(\n        "%s.%s.%s",\n' % (

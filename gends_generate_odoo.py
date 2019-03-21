@@ -37,10 +37,10 @@ supermod = None
 
 # by default we sign XLM's with other tools, so we skip the Signature structure
 SimpleType_skip = ['TTransformURI']
-Class_skip = ['SignatureType', 'SignatureValueType', 'SignedInfoType',
-              'ReferenceType', 'DigestMethodType', 'TransformsType',
-              'TransformType', 'KeyInfoType', 'X509DataType',
-              'CanonicalizationMethodType', 'SignatureMethodType']
+Class_skip = ['Signature', 'SignatureValue', 'SignedInfo',
+              'Reference', 'DigestMethod', 'Transforms',
+              'Transform', 'KeyInfo', 'X509Data',
+              'CanonicalizationMethod', 'SignatureMethod']
 
 #
 # Classes
@@ -203,11 +203,11 @@ def generate_model(options, module_name):
                     labels[type_node.attrib['name']][field.attrib['name']] = spec_doc
 
     for class_name in supermod.__all__:
-        if hasattr(supermod, class_name) and class_name not in Class_skip:
+        if hasattr(supermod, class_name) and class_name.replace('Type','') not in Class_skip:
             cls = getattr(supermod, class_name)
             cls.generate_model_(
                 wrtmodels, wrtsecurity, unique_name_map, options,
-                generate_ds, implicit_many2ones, labels)
+                generate_ds, implicit_many2ones, labels, Class_skip)
     models_writer.close()
     print('Wrote %d lines to %s' % (models_writer.get_count(),
                                     models_writer.get_outfilename()))
