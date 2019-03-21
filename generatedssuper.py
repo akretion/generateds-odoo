@@ -273,9 +273,8 @@ class GeneratedsSuper(object):
             data_type = spec.get_data_type()
             is_optional = spec.get_optional()
             prefix, data_type = cls.get_prefix_name(data_type)
-            class_labels = labels[class_name]
-            if class_labels.get(name):
-                spec_doc = class_labels[name]
+            if labels.get(class_name) and labels[class_name].get(name):
+                spec_doc = labels[class_name][name]
             else:
                 spec_doc = name
             if data_type in Defined_simple_type_table:
