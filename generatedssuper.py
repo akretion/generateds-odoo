@@ -177,12 +177,12 @@ class GeneratedsSuper(object):
             string = string.replace("\"", "'")
             if string.endswith(':'):
                 string = string[:-1]
-            if len(string) > 63:
+            if len(string) > 58:
                 string = field_name
 
             if string != doc and string != doc[:-1]:
                 # help is only useful it adds more than a ponctuation symbol
-                doc = wrap_text(doc, 8, 79, initial_indent=14, multi=True)
+                doc = wrap_text(doc, 8, 78, initial_indent=14, multi=True)
                 help_attr = 'help=%s' % (doc)
         return string, help_attr
 
@@ -207,12 +207,13 @@ class GeneratedsSuper(object):
             model_suffix = ''
         class_name = unique_name_map.get(cls.__name__)
         odoo_class_name = class_name.replace('Type', '')
+        odoo_class = odoo_class_name[0].capitalize() + odoo_class_name[1:100]
         # TODO regexp replace
 #        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
         field_prefix = "%s_" % (Lib_name,)
 
         wrtmodels('\n\nclass %s%s(spec_models.AbstractSpecMixin):\n' % (
-            odoo_class_name, model_suffix, ))
+            odoo_class, model_suffix, ))
         if cls.__doc__:
             wrtmodels('    %s\n' % (
                 wrap_text(cls.__doc__, 4, 79), ))
@@ -328,7 +329,9 @@ class GeneratedsSuper(object):
                         digits = original_st[8]
                         if len(string) > 50:
                             options = "\n        %s" % (options,)
-                        options = "digits=%s, %s" % (digits, options)
+                            options = "digits=%s,%s" % (digits, options)
+                        else:
+                            options = "digits=%s, %s" % (digits, options)
                     wrtmodels(
                         '    %s = fields.Monetary(\n        %s)\n' % (
                             field_name, options))

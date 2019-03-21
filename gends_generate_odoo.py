@@ -81,8 +81,6 @@ class Writer(object):
 
 
 TEMPLATE_HEADER = """\
-# -*- coding: utf-8 -*-
-
 #
 # Generated {tstamp} by generateDS.py{version}.
 # Python {pyversion}
