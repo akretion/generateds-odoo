@@ -182,7 +182,7 @@ class GeneratedsSuper(object):
 
             if string != doc and string != doc[:-1]:
                 # help is only useful it adds more than a ponctuation symbol
-                doc = wrap_text(doc, 14, 79, initial_indent=14, multi=True)
+                doc = wrap_text(doc, 8, 79, initial_indent=14, multi=True)
                 help_attr = 'help=%s' % (doc)
         return string, help_attr
 

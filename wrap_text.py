@@ -39,7 +39,15 @@ def wrap_text(text, indent, width=79, initial_indent=4, multi=False):
         return text
     else:
         lines = ["\"%s\"" % (i.strip().replace('"', "'"),) for i in text.splitlines()]
-        text = ("\n%s" % (" " * indent,)).join(lines)
+        lines2 = []
+        first = True
+        for l in lines:
+            if not first:
+                l = "\"\\n%s" % (l[1:100],)
+            else:
+                first = False
+            lines2.append(l)
+        text = ("\n%s" % (" " * indent,)).join(lines2)
         if "\n" in text:
-            text = "(%s)" % (text,)
+            text = "%s" % (text,)
         return text
