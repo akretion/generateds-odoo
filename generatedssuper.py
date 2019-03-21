@@ -118,6 +118,9 @@ Boolean_type_table = {
     'boolean': None,
 }
 
+# by default we sign XLM's with other tools, so we skip the Signature structure
+Many2One_skip = ['Signature']
+
 
 #
 # Classes
@@ -373,6 +376,8 @@ class GeneratedsSuper(object):
                     clean_data_type = mapped_type.replace('Type', '')
                     # TODO regexp replace
                 if spec.get_container() == 0: # name in cls._many2one:
+                    if clean_data_type in Many2One_skip:
+                        continue
                     wrtmodels(
                     '    %s = fields.Many2one(\n        "%s.%s.%s",\n' % (
                                 field_name, Lib_name, Version,

@@ -35,6 +35,13 @@ from wrap_text import wrap_text
 
 supermod = None
 
+# by default we sign XLM's with other tools, so we skip the Signature structure
+SimpleType_skip = ['TTransformURI']
+Class_skip = ['SignatureType', 'SignatureValueType', 'SignedInfoType',
+              'ReferenceType', 'DigestMethodType', 'TransformsType',
+              'TransformType', 'KeyInfoType', 'X509DataType',
+              'CanonicalizationMethodType', 'SignatureMethodType']
+
 #
 # Classes
 #
@@ -143,6 +150,8 @@ def generate_model(options, module_name):
     wrtmodels(header)
 
     for type_name in sorted(Defined_simple_type_table.keys()):
+        if type_name in SimpleType_skip:
+            continue
         descr = Defined_simple_type_table[type_name]
         if descr.get_enumeration_():
             enum = descr.get_enumeration_()
@@ -187,7 +196,7 @@ def generate_model(options, module_name):
     type_nodes = xsd.xpath("//xs:complexType",
                            namespaces=ns)
     labels = {}
-    for type_node in type_nodes:
+    for type_node in [t for t in type_nodes if t.attrib.get('name')]:
         labels[type_node.attrib['name']] = {}
         field_nodes = type_node.xpath(".//xs:element", namespaces=ns)
         for field in field_nodes:
@@ -198,28 +207,14 @@ def generate_model(options, module_name):
                     labels[type_node.attrib['name']][field.attrib['name']] = spec_doc
 
     for class_name in supermod.__all__:
-        if hasattr(supermod, class_name):
+        if hasattr(supermod, class_name) and class_name not in Class_skip:
             cls = getattr(supermod, class_name)
             cls.generate_model_(
                 wrtmodels, wrtsecurity, unique_name_map, options,
                 generate_ds, implicit_many2ones, labels)
-        else:
-            sys.stderr.write('class %s not defined\n' % (class_name, ))
-    first_time = True
-    for class_name in supermod.__all__:
-        class_name = unique_name_map.get(class_name)
-#        if first_time:
-#            wrtadmin('    %s%s' % (class_name, model_suffix ))
-#            first_time = False
-#        else:
-#            wrtadmin(', \\\n    %s%s' % (class_name, model_suffix ))
-    for class_name in supermod.__all__:
-        class_name = unique_name_map.get(class_name)
-#        wrtadmin('admin.site.register(%s%s)\n' % (class_name, model_suffix ))
-#    wrtadmin('\n')
     models_writer.close()
     print('Wrote %d lines to %s' % (models_writer.get_count(),
-                                           models_writer.get_outfilename()))
+                                    models_writer.get_outfilename()))
 
 
 def make_unique_name_map(name_list):
