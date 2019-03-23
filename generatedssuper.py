@@ -186,7 +186,8 @@ class GeneratedsSuper(object):
     @classmethod
     def generate_model_(
             cls, wrtmodels, wrtsecurity, unique_name_map, options,
-            generate_ds, implicit_many2ones, labels, class_skip):
+            generate_ds, implicit_many2ones, labels, class_skip,
+            remapped_simple_types):
 
         # we pass the generateDS package as an argument to avoid
         # having to import it dynamically from a custom location
@@ -359,6 +360,10 @@ class GeneratedsSuper(object):
                    if Defined_simple_type_table.get(original_st) \
                             and (Defined_simple_type_table[original_st]
                             ).get_enumeration_():
+                        if remapped_simple_types.get(original_st):
+                            enum_const = remapped_simple_types[original_st]
+                        else:
+                            enum_const = original_st
                         enum_type = Defined_simple_type_table[original_st]
                         string, help_attr = cls.extract_string_help_select(
                            field_name,
@@ -368,7 +373,7 @@ class GeneratedsSuper(object):
                                                            help_attr)
                         wrtmodels(
                             '    %s = fields.Selection(\n        %s,\n        %s)\n' % (
-                            field_name, original_st, options, ))
+                            field_name, enum_const, options, ))
                    else:
 #                        if len(string) + len(field_name) > 51:
                         options = "\n        %s" % (options,)

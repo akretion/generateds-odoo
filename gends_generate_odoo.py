@@ -27,7 +27,7 @@ else:
     from io import StringIO as stringio
 from lxml import etree
 from wrap_text import wrap_text
-
+from collections import defaultdict
 
 #
 # Globals
@@ -149,8 +149,34 @@ def generate_model(options, module_name):
         pyversion=sys.version.replace('\n', ' '))
     wrtmodels(header)
 
+    sys.path.append(options.path)
+    generate_ds = importlib.import_module('generateDS')
+
+    # collect implicit m2o related to explicit o2m:
+    implicit_many2ones = defaultdict(list)
+    simple_type_usages = defaultdict(list)
+    for class_name in supermod.__all__:
+        if hasattr(supermod, class_name):
+            cls = getattr(supermod, class_name)
+            for spec in cls.member_data_items_:
+                if spec.get_container() == 1: # o2m
+                    name = spec.get_name()
+                    related = spec.get_data_type_chain()
+                    if isinstance(related, list):
+                        related = related[0]
+                    implicit_many2ones[related].append((class_name, name))
+                else:
+                    data_type = spec.get_data_type()
+                    if len(spec.get_data_type_chain()) == 0:
+                        original_st = data_type
+                    else:
+                        original_st = spec.get_data_type_chain()[0]
+                    if Defined_simple_type_table.get(original_st):
+                        simple_type_usages[original_st].append(class_name)
+
+    remapped_simple_types = {}
     for type_name in sorted(Defined_simple_type_table.keys()):
-        if type_name in SimpleType_skip:
+        if type_name in SimpleType_skip: # TODO see later
             continue
         descr = Defined_simple_type_table[type_name]
         if descr.get_enumeration_():
@@ -160,7 +186,17 @@ def generate_model(options, module_name):
                 descr = "\n# ".join(wrap_text(descr.get_descr_(),
                                               0, 73, quote=False).splitlines())
                 wrtmodels("\n# %s" % (descr,))
-
+            
+            usages = simple_type_usages[type_name]
+            if len(usages) == 0:
+                continue
+            elif len(usages) == 1:
+                old_name = type_name 
+                name = type_name.split('Type')[0]
+                type_name = "%s_%s" % (name,
+                    simple_type_usages[type_name][0].split('Type')[0])
+                remapped_simple_types[old_name] = type_name 
+ 
             wrtmodels('\n%s = [' % (type_name,))
             for i in enum:
                 value = i[0][0:32] # FIXME for CCe, wrap it like label instead
@@ -169,25 +205,8 @@ def generate_model(options, module_name):
                                   multi=True, preserve_line_breaks=False)
                 wrtmodels("""\n    ("%s", %s),""" % (value, label))
             wrtmodels("\n]\n")
+            # wrtmodels("usages: %s\n" % (usages,))
 
-    # collect implicit m2o related to explicit o2m:
-    implicit_many2ones = {}
-    for class_name in supermod.__all__:
-        if hasattr(supermod, class_name):
-            cls = getattr(supermod, class_name)
-            for spec in cls.member_data_items_:
-                if spec.get_container() == 1:
-                    name = spec.get_name()
-                    related = spec.get_data_type_chain()
-                    if isinstance(related, list):
-                        related = related[0]
-                    if implicit_many2ones.get(related):
-                        implicit_many2ones[related].append((class_name, name))
-                    else:
-                        implicit_many2ones[related] = [(class_name, name)]
-
-    sys.path.append(options.path)
-    generate_ds = importlib.import_module('generateDS')
     xsd = parse_preprocess_xsd(options)
 
     ns = {'xs': 'http://www.w3.org/2001/XMLSchema'}
@@ -209,7 +228,8 @@ def generate_model(options, module_name):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
                 wrtmodels, wrtsecurity, unique_name_map, options,
-                generate_ds, implicit_many2ones, labels, Class_skip)
+                generate_ds, implicit_many2ones, labels, Class_skip,
+                remapped_simple_types)
     models_writer.close()
     print('Wrote %d lines to %s' % (models_writer.get_count(),
                                     models_writer.get_outfilename()))
