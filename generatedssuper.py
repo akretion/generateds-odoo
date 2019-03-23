@@ -118,9 +118,6 @@ Boolean_type_table = {
     'boolean': None,
 }
 
-# by default we sign XLM's with other tools, so we skip the Signature structure
-Many2One_skip = ['Signature']
-
 
 #
 # Classes
@@ -225,7 +222,6 @@ class GeneratedsSuper(object):
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
                                                 odoo_class_name.lower(), ))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
-        wrtmodels("    _concrete_class = None\n")
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
                   (Lib_name, cls.member_data_items_[0].get_name()))
         wrtsecurity("access_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
