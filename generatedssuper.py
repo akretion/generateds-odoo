@@ -202,6 +202,14 @@ class GeneratedsSuper(object):
             model_suffix = '_model'
         else:
             model_suffix = ''
+
+        # TODO via options
+        Date_type_table.update({'TData': None})
+        DateTime_type_table.update({'TDateTimeUTC': None})
+        Simple_type_table.update(Date_type_table)
+        Simple_type_table.update(DateTime_type_table)
+        #wrtmodels("%s" % (Simple_type_table,))
+
         class_name = unique_name_map.get(cls.__name__)
         odoo_class_name = class_name.replace('Type', '')
         odoo_class = odoo_class_name[0].capitalize() + odoo_class_name[1:100]
@@ -321,7 +329,7 @@ class GeneratedsSuper(object):
                     wrtmodels('    %s = fields.Float(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in Decimal_type_table or 'TDec_' in original_st:
-                    if 'TDec_' in original_st:
+                    if 'TDec_' in original_st:  # TODO make more flexible
                         digits = original_st[8]
                         if len(string) > 50:
                             options = "\n        %s" % (options,)
@@ -331,10 +339,12 @@ class GeneratedsSuper(object):
                     wrtmodels(
                         '    %s = fields.Monetary(\n        %s)\n' % (
                             field_name, options))
-                elif data_type in Date_type_table:
+                elif data_type in Date_type_table\
+                        or original_st in Date_type_table:
                     wrtmodels('    %s = fields.Date(\n        %s)\n' % (
                         field_name, options, ))
-                elif data_type in DateTime_type_table:
+                elif data_type in DateTime_type_table\
+                        or original_st in DateTime_type_table:
                     wrtmodels('    %s = fields.Datetime(\n        %s)\n' % (
                         field_name, options, ))
                 elif data_type in Time_type_table:
