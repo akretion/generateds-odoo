@@ -198,7 +198,8 @@ class GeneratedsSuper(object):
 
         class_suffixes = options.class_suffixes
         Lib_name = options.schema_name
-        Version = options.version
+        # Simplified version: 2 digits only. # TODO make it flexible
+        Version = ''.join([i for i in options.version if i.isdigit()][:2])
         if class_suffixes:
             model_suffix = '_model'
         else:
@@ -216,7 +217,7 @@ class GeneratedsSuper(object):
         odoo_class = odoo_class_name[0].capitalize() + odoo_class_name[1:100]
         # TODO regexp replace
 #        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
-        field_prefix = "%s_" % (Lib_name,)
+        field_prefix = "%s%s_" % (Lib_name, Version)
 
         wrtmodels('\n\nclass %s%s(spec_models.AbstractSpecMixin):\n' % (
             odoo_class, model_suffix, ))
