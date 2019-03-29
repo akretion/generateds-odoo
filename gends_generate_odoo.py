@@ -181,21 +181,22 @@ def generate_model(options, module_name):
         if descr.get_enumeration_():
             enum = descr.get_enumeration_()
 
+            usages = simple_type_usages[type_name]
+# TODO bug with that in cte module with cInfManuType in cteModalAereo.py
+            if len(usages) == 0:
+                continue
+            elif len(usages) == 1:
+                old_name = type_name
+                name = type_name.split('Type')[0]
+                type_name = "%s_%s" % (name,
+                    simple_type_usages[type_name][0].split('Type')[0])
+                remapped_simple_types[old_name] = type_name
+
             if len(descr.get_descr_()) > 0:
                 descr = "\n# ".join(wrap_text(descr.get_descr_(),
                                               0, 73, quote=False).splitlines())
                 wrtmodels("\n# %s" % (descr,))
-            
-            usages = simple_type_usages[type_name]
-            if len(usages) == 0:
-                continue
-            elif len(usages) == 1:
-                old_name = type_name 
-                name = type_name.split('Type')[0]
-                type_name = "%s_%s" % (name,
-                    simple_type_usages[type_name][0].split('Type')[0])
-                remapped_simple_types[old_name] = type_name 
- 
+
             wrtmodels('\n%s = [' % (type_name,))
             for i in enum:
                 value = i[0][0:32] # FIXME for CCe, wrap it like label instead
