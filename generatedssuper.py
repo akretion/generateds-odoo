@@ -187,7 +187,7 @@ class GeneratedsSuper(object):
     def generate_model_(
             cls, wrtmodels, wrtsecurity, unique_name_map, options,
             generate_ds, implicit_many2ones, labels, class_skip,
-            remapped_simple_types):
+            remapped_simple_types, module_name):
 
         # we pass the generateDS package as an argument to avoid
         # having to import it dynamically from a custom location
@@ -234,8 +234,8 @@ class GeneratedsSuper(object):
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
                   (Lib_name, cls.member_data_items_[0].get_name()))
-        wrtsecurity("access_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
-        Lib_name, Version, odoo_class_name.lower(),
+        wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
+            module_name[:14], Lib_name, Version, odoo_class_name.lower(),
         Lib_name, Version, odoo_class_name.lower(),
         Lib_name, Version, odoo_class_name.lower().replace('.', '_')))
 #        if cls.superclass is not None:

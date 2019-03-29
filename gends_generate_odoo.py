@@ -228,7 +228,7 @@ def generate_model(options, module_name):
             cls.generate_model_(
                 wrtmodels, wrtsecurity, unique_name_map, options,
                 generate_ds, implicit_many2ones, labels, Class_skip,
-                remapped_simple_types)
+                remapped_simple_types, module_name)
     models_writer.close()
     print('Wrote %d lines to %s' % (models_writer.get_count(),
                                     models_writer.get_outfilename()))
