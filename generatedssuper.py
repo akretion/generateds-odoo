@@ -246,10 +246,11 @@ class GeneratedsSuper(object):
 #                model_suffix, ))
 
         if class_name in implicit_many2ones:
-            comodel = implicit_many2ones[class_name][0][0].replace("Type", "")
-            target_field = implicit_many2ones[class_name][0][1]
-            wrtmodels(
-                '    %s%s_%s_id = fields.Many2one(\n        "%s.%s.%s")\n' % (
+            for item in implicit_many2ones[class_name]:
+                comodel = item[0].replace("Type", "")
+                target_field = item[1]
+                wrtmodels(
+                    '    %s%s_%s_id = fields.Many2one(\n        "%s.%s.%s")\n' % (
                     field_prefix, target_field, comodel, Lib_name, Version,
                     comodel.lower()))
 
