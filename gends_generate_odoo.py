@@ -85,8 +85,7 @@ TEMPLATE_HEADER = """\
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.en.html).
 # Generated {tstamp} by generateDS.py{version}.
 # Python {pyversion}
-#
-import textwrap
+#{textwrap_import}
 from odoo import fields
 from .. import spec_models
 """
@@ -138,40 +137,62 @@ def generate_model(options, module_name):
     wrtsecurity = security_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
 
-    tstamp = time.ctime()
-    version = "(Akretion's branch)"
-    current_working_directory = os.path.split(os.getcwd())[1]
-
-    header = TEMPLATE_HEADER.format(
-        tstamp=tstamp,
-        version=version,
-        pyversion=sys.version.replace('\n', ' '))
-    wrtmodels(header)
-
-    sys.path.append(options.path)
-    generate_ds = importlib.import_module('generateDS')
-
     # collect implicit m2o related to explicit o2m:
     implicit_many2ones = defaultdict(list)
     simple_type_usages = defaultdict(list)
+    need_textwrap = False
     for class_name in supermod.__all__:
         if hasattr(supermod, class_name):
             cls = getattr(supermod, class_name)
+            if cls.__doc__:
+                need_textwrap = True
             for spec in cls.member_data_items_:
-                if spec.get_container() == 1: # o2m
+                if spec.get_container() == 1:  # o2m
                     name = spec.get_name()
                     related = spec.get_data_type_chain()
                     if isinstance(related, list):
                         related = related[0]
                     implicit_many2ones[related].append((class_name, name))
+
+                data_type = spec.get_data_type()
+                if len(spec.get_data_type_chain()) == 0:
+                    original_st = data_type
                 else:
-                    data_type = spec.get_data_type()
-                    if len(spec.get_data_type_chain()) == 0:
-                        original_st = data_type
-                    else:
-                        original_st = spec.get_data_type_chain()[0]
-                    if Defined_simple_type_table.get(original_st):
-                        simple_type_usages[original_st].append(class_name)
+                    original_st = spec.get_data_type_chain()[0]
+                if Defined_simple_type_table.get(original_st):
+                    simple_type_usages[original_st].append(class_name)
+                    if spec.get_container() == 1:
+                        print("!!!WARNING!!!"
+                              "\n%s of class %s"
+                              "\nis actually a multi-select"
+                              "\ninstead of a fields.Selection!"
+                              "\n!!!WARNING!!!"%
+                              (name, class_name))
+                    # TODO if spec.get_container() == 1 then
+                    # it's a m2o of string class, like a multi-select
+                    # example cInfManu of type cInfManu_natCarga
+                    # in cte cteModalAereo that we currently deal
+                    # as a fields.selection
+
+    tstamp = time.ctime()
+    version = "(Akretion's branch)"
+    current_working_directory = os.path.split(os.getcwd())[1]
+    if need_textwrap:
+        textwrap_import = "\nimport textwrap"
+    else:
+        textwrap_import = ""
+
+    header = TEMPLATE_HEADER.format(
+        tstamp=tstamp,
+        version=version,
+        pyversion=sys.version.replace('\n', ' '),
+        textwrap_import=textwrap_import)
+    wrtmodels(header)
+
+    sys.path.append(options.path)
+    generate_ds = importlib.import_module('generateDS')
+
+
 
     remapped_simple_types = {}
     for type_name in sorted(Defined_simple_type_table.keys()):
