@@ -390,9 +390,9 @@ class GeneratedsSuper(object):
                 if mapped_type is not None:
                     clean_data_type = mapped_type.replace('Type', '')
                     # TODO regexp replace
+                if clean_data_type in class_skip:
+                    continue
                 if spec.get_container() == 0: # name in cls._many2one:
-                    if clean_data_type in class_skip:
-                        continue
                     wrtmodels(
                     '    %s = fields.Many2one(\n        "%s.%s.%s",\n' % (
                                 field_name, Lib_name, Version,
