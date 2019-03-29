@@ -291,10 +291,6 @@ class GeneratedsSuper(object):
                 data_type = (Defined_simple_type_table[data_type]
                              ).get_type_name_()
             name = mapName(cleanupName(name))
-            if name == 'id':
-                name += 'x'
-            elif name.endswith('_') and not name == AnyTypeIdentifier:
-                name += 'x'
             field_name = "%s%s" % (field_prefix, name)
             clean_data_type = mapName(cleanupName(data_type))
             if data_type == AnyTypeIdentifier:
