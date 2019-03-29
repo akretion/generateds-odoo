@@ -208,8 +208,10 @@ class GeneratedsSuper(object):
         # TODO via options
         Date_type_table.update({'TData': None})
         DateTime_type_table.update({'TDateTimeUTC': None})
+        Boolean_type_table.update({'byte': None})
         Simple_type_table.update(Date_type_table)
         Simple_type_table.update(DateTime_type_table)
+        Boolean_type_table.update(DateTime_type_table)
         #wrtmodels("%s" % (Simple_type_table,))
 
         class_name = unique_name_map.get(cls.__name__)
