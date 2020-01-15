@@ -26,7 +26,7 @@ if sys.version_info.major == 2:
 else:
     from io import StringIO as stringio
 from lxml import etree
-from wrap_text import wrap_text
+from generateds.odoo.wrap_text import wrap_text
 from collections import defaultdict
 
 #
@@ -86,8 +86,7 @@ TEMPLATE_HEADER = """\
 # Generated {tstamp} by generateDS.py{version}.
 # Python {pyversion}
 #{textwrap_import}
-from odoo import fields
-from .. import spec_models
+from odoo import fields, models
 """
 
 #
@@ -209,8 +208,8 @@ def generate_model(options, module_name):
             elif len(usages) == 1:
                 old_name = type_name
                 name = type_name.split('Type')[0]
-                type_name = "%s_%s" % (name,
-                    simple_type_usages[type_name][0].split('Type')[0])
+                type_name = "%s_%s" % (name.upper(),
+                    simple_type_usages[type_name][0].split('Type')[0].upper())
                 remapped_simple_types[old_name] = type_name
 
             if len(descr.get_descr_()) > 0:

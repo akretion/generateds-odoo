@@ -221,7 +221,7 @@ class GeneratedsSuper(object):
 #        field_prefix = "%s_%s__" % (Lib_name, odoo_class_name.lower())
         field_prefix = "%s%s_" % (Lib_name, Version)
 
-        wrtmodels('\n\nclass %s%s(spec_models.AbstractSpecMixin):\n' % (
+        wrtmodels('\n\nclass %s%s(models.AbstractModel):\n' % (
             odoo_class, model_suffix, ))
         if cls.__doc__:
             wrtmodels('    %s\n' % (
@@ -233,9 +233,10 @@ class GeneratedsSuper(object):
             wrtmodels("    _description = '%s'\n" % (odoo_class_name.lower()))
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
                                                 odoo_class_name.lower(), ))
+        wrtmodels("    _inherit = 'spec.mixin.nfe'\n")
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
-                  (Lib_name, cls.member_data_items_[0].get_name()))
+                  (Lib_name + Version, cls.member_data_items_[0].get_name()))
         wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
             module_name[:14], Lib_name, Version, odoo_class_name.lower(),
         Lib_name, Version, odoo_class_name.lower(),
@@ -338,7 +339,8 @@ class GeneratedsSuper(object):
                         else:
                             options = "digits=%s, %s" % (digits, options)
                     wrtmodels(
-                        '    %s = fields.Monetary(\n        %s)\n' % (
+                        '    %s = fields.Monetary('
+                        'currency_field="brl_currency_id",\n        %s)\n' % (
                             field_name, options))
                 elif data_type in Date_type_table\
                         or original_st in Date_type_table:

@@ -36,6 +36,8 @@ import getopt
 import os
 from subprocess import Popen, PIPE
 from glob import glob
+from generateds.odoo import gends_extract_simple_types
+from generateds.odoo import gends_generate_odoo
 
 
 #
@@ -87,9 +89,10 @@ def generate(options, schema_file_name):
         schema_file_name,
     )
     if not run_cmd(options, args):
+        print('error')
         return
     args = (
-        "%s/gends_extract_simple_types.py" % (os.environ['ODOO_GEN_HOME']),
+        gends_extract_simple_types.__file__,
         '-f',
         '-p',
         options['path'].replace('/generateDS.py', ''),  # TODO does it work?
@@ -98,10 +101,11 @@ def generate(options, schema_file_name):
         schema_file_name,
     )
     if not run_cmd(options, args):
+        print('error')
         return
     if options['class_suffixes']:
         args = (
-            "%s/gends_generate_odoo.py" % (os.environ['ODOO_GEN_HOME']),
+            gends_generate_odoo.__file__,
             '-f',
             '-p',
             options['path'].replace('/generateDS.py', ''),  # TODO does it work
@@ -117,7 +121,7 @@ def generate(options, schema_file_name):
         )
     else:
         args = (
-            "%s/gends_generate_odoo.py" % (os.environ['ODOO_GEN_HOME']),
+            gends_generate_odoo.__file__,
             '-f',
             '-p',
             options['path'].replace('/generateDS.py', ''),  # TODO does it work
@@ -133,13 +137,14 @@ def generate(options, schema_file_name):
             bindings_file_stem,
         )
     if not run_cmd(options, args):
+        print('error')
         return
 
 
 def run_cmd(options, args):
     msg = '%s\n' % (' '.join(args), )
     dbg_msg(options, '*** running %s' % (msg, ))
-    if options['script']:
+    if options.get('script'):
         write_msg(options, msg)
     process = Popen(args, stderr=PIPE, stdout=PIPE)
     content1 = process.stderr.read()

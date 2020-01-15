@@ -59,3 +59,4 @@ def wrap_text(text, indent, width=79, initial_indent=4, multi=False,
         if "\n" in text:
             text = "%s" % (text,)
         return text
+
