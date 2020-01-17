@@ -82,6 +82,7 @@ def generate(options, schema_file_name):
         if (flag1 or flag2):
             return
     args = (
+        'python',
         options['path'],
         '-f',
         '-o', "%s/%s" % (options['output_dir'], bindings_file_name),
@@ -92,6 +93,7 @@ def generate(options, schema_file_name):
         print('error')
         return
     args = (
+        'python',
         gends_extract_simple_types.__file__,
         '-f',
         '-p',
@@ -105,6 +107,7 @@ def generate(options, schema_file_name):
         return
     if options['class_suffixes']:
         args = (
+            'python',
             gends_generate_odoo.__file__,
             '-f',
             '-p',
@@ -121,6 +124,7 @@ def generate(options, schema_file_name):
         )
     else:
         args = (
+            'python',
             gends_generate_odoo.__file__,
             '-f',
             '-p',
