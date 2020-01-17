@@ -26,7 +26,7 @@ if sys.version_info.major == 2:
 else:
     from io import StringIO as stringio
 from lxml import etree
-from generateds.odoo.wrap_text import wrap_text
+from odoo.wrap_text import wrap_text
 from collections import defaultdict
 
 #

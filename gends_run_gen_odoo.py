@@ -36,8 +36,8 @@ import getopt
 import os
 from subprocess import Popen, PIPE
 from glob import glob
-from generateds.odoo import gends_extract_simple_types
-from generateds.odoo import gends_generate_odoo
+from odoo import gends_extract_simple_types
+from odoo import gends_generate_odoo
 
 
 #

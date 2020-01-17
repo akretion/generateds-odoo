@@ -1,7 +1,7 @@
 from  __future__ import print_function
 import sys
 from generateds_definedsimpletypes import Defined_simple_type_table
-from wrap_text import wrap_text
+from odoo.wrap_text import wrap_text
 
 #
 # Globals
