@@ -217,6 +217,9 @@ def generate_model(options, module_name):
                                               0, 73, quote=False).splitlines())
                 wrtmodels("\n# %s" % (descr,))
 
+            old_name = type_name
+            type_name = type_name.upper()
+            remapped_simple_types[old_name] = type_name
             wrtmodels('\n%s = [' % (type_name,))
             for i in enum:
                 value = i[0][0:32] # FIXME for CCe, wrap it like label instead
