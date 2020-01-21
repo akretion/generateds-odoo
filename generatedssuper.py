@@ -303,15 +303,16 @@ class GeneratedsSuper(object):
                 spec.get_name(), spec_doc)
 
             if is_optional:
-                options = 'string="%s"' % (string,)
+                options = 'string="%s",\n        xsd=True' % (string,)
             else:
-                if (len(string) + len(field_name) > 30):
-                    options = 'string="%s",\n        xsd_required=True' % (
-                        string,)
+                if len(string) + len(field_name) > 30:
+                    options = 'string="%s",\n        xsd=True,' \
+                              '\n        xsd_required=True' % (string,)
                 else:
-                    options = 'string="%s", xsd_required=True' % (string,)
+                    options = 'string="%s", xsd=True, xsd_required=True' % (
+                        string,)
 
-            if choice != None:
+            if choice is not None:
                 options = """choice='%s',\n        %s""" % (choice, options)
 
             options_nohelp = options
