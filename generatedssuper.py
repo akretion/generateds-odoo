@@ -277,8 +277,8 @@ class GeneratedsSuper(object):
             label="/".join(i for i in v)
             if len(label) > 50:
                 label="%s..." % (label[0:50])
-            wrtmodels("""],\n        "%s",\n        default="%s%s")\n""" % (
-                label, field_prefix, v[0]))
+            wrtmodels("""],\n        "%s")\n""" % (
+                label))
 
         for spec in cls.member_data_items_:
             name = spec.get_name()
