@@ -340,7 +340,7 @@ class GeneratedsSuper(object):
                         else:
                             options = "digits=%s, %s" % (digits, options)
                     wrtmodels(
-                        '    %s = fields.Monetary('
+                        '    %s = fields.Monetary(\n        '
                         'currency_field="brl_currency_id",\n        %s)\n' % (
                             field_name, options))
                 elif data_type in Date_type_table\
