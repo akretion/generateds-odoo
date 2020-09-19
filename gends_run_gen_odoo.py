@@ -36,8 +36,10 @@ import getopt
 import os
 from subprocess import Popen, PIPE
 from glob import glob
-from odoo import gends_extract_simple_types
-from odoo import gends_generate_odoo
+from shutil import which
+from pathlib import Path
+
+ODOO_GEN_HOME = os.environ.get('ODOO_GEN_HOME', str(Path(__file__).parent))
 
 
 #
@@ -82,7 +84,7 @@ def generate(options, schema_file_name):
         if (flag1 or flag2):
             return
     args = (
-        'python',
+        'python3',
         options['path'],
         '-f',
         '-o', "%s/%s" % (options['output_dir'], bindings_file_name),
@@ -93,8 +95,7 @@ def generate(options, schema_file_name):
         print('error')
         return
     args = (
-        'python',
-        gends_extract_simple_types.__file__,
+        "%s/gends_extract_simple_types.py" % (ODOO_GEN_HOME,),
         '-f',
         '-p',
         options['path'].replace('/generateDS.py', ''),  # TODO does it work?
@@ -107,8 +108,8 @@ def generate(options, schema_file_name):
         return
     if options['class_suffixes']:
         args = (
-            'python',
-            gends_generate_odoo.__file__,
+            'python3',
+            '%s/gends_generate_odoo.py' % (ODOO_GEN_HOME),
             '-f',
             '-p',
             options['path'].replace('/generateDS.py', ''),  # TODO does it work
@@ -118,14 +119,18 @@ def generate(options, schema_file_name):
             options['version'],
             '-d',
             options['output_dir'],
+            '-n',
+            options['notes'],
+            '-e',
+            options['skip'],
             '-s',
             schema_file_name,
             bindings_file_stem,
         )
     else:
         args = (
-            'python',
-            gends_generate_odoo.__file__,
+            'python3',
+            "%s/gends_generate_odoo.py" % (ODOO_GEN_HOME),
             '-f',
             '-p',
             options['path'].replace('/generateDS.py', ''),  # TODO does it work
@@ -135,6 +140,10 @@ def generate(options, schema_file_name):
             options['version'],
             '-d',
             options['output_dir'],
+            '-n',
+            options['notes'],
+            '-e',
+            options['skip'],
             '--no-class-suffixes',
             '-s',
             schema_file_name,
@@ -194,11 +203,12 @@ def usage():
 def main():
     args = sys.argv[1:]
     try:
-        opts, args = getopt.getopt(args, 'hvfp:l:x:d:s', [
+        opts, args = getopt.getopt(args, 'hvfp:l:x:d:s:n:e:', [
             'help', 'verbose', 'script',
             'force', 'path-to-generateDS-script=',
             'schema_name', 'version',
-            'directory=', 'no-class-suffixes'
+            'directory=', 'no-class-suffixes',
+            'notes', 'skip'
         ])
     except:
         usage()
@@ -208,6 +218,8 @@ def main():
     options['script'] = False
     options['path'] = './generateDS.py'
     options['class_suffixes'] = True
+    options['notes'] = ''
+    options['skip'] = ''
     for opt, val in opts:
         if opt in ('-h', '--help'):
             usage()
@@ -227,10 +239,17 @@ def main():
             options['schema_name'] = val
         elif opt in ('-x', '--version'):
             options['version'] = val
+        elif opt in ('-n', '--notes'):
+            options['notes'] = val
+        elif opt in ('-e', '--skip'):
+            options['skip'] = val
     if not os.path.exists(options['path']):
-        sys.exit(
-            '\n*** error: Cannot find generateDS.py.  '
-            'Use "-p path" command line option.\n')
+        if not which('generateDS'):
+            sys.exit(
+                '\n*** error: Cannot find generateDS.py.  '
+                'Install generateDS or use "-p path" command line option.\n')
+        else:
+            options['path'] = "%s.py" % (str(which("generateDS")),)
     if len(args) != 1:
         usage()
     schema_name = args[0]

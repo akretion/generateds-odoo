@@ -1,7 +1,10 @@
 from  __future__ import print_function
 import sys
+import re
 from generateds_definedsimpletypes import Defined_simple_type_table
-from odoo.wrap_text import wrap_text
+#from odoo.wrap_text import wrap_text
+from wrap_text import wrap_text
+
 
 #
 # Globals
@@ -185,7 +188,7 @@ class GeneratedsSuper(object):
 
     @classmethod
     def generate_model_(
-            cls, wrtmodels, wrtsecurity, unique_name_map, options,
+            cls, wrtmodels, unique_name_map, options,
             generate_ds, implicit_many2ones, labels, class_skip,
             remapped_simple_types, module_name):
 
@@ -237,10 +240,10 @@ class GeneratedsSuper(object):
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
                   (Lib_name + Version, cls.member_data_items_[0].get_name()))
-        wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
-            module_name[:14], Lib_name, Version, odoo_class_name.lower(),
-        Lib_name, Version, odoo_class_name.lower(),
-        Lib_name, Version, odoo_class_name.lower().replace('.', '_')))
+#        wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
+#            module_name[:14], Lib_name, Version, odoo_class_name.lower(),
+#        Lib_name, Version, odoo_class_name.lower(),
+#        Lib_name, Version, odoo_class_name.lower().replace('.', '_')))
 #        if cls.superclass is not None:
 #            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
 #                cls.superclass.__name__, cls.superclass.__name__,
@@ -259,7 +262,7 @@ class GeneratedsSuper(object):
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
-            if choice != None:
+            if choice != None and not any(re.search(pattern, name) for pattern in class_skip):
                 if choice not in choice_selectors.keys():
                     choice_selectors[choice] = []
                 choice_selectors[choice].append(name)
@@ -392,7 +395,7 @@ class GeneratedsSuper(object):
                 if mapped_type is not None:
                     clean_data_type = mapped_type.replace('Type', '')
                     # TODO regexp replace
-                if clean_data_type in class_skip:
+                if any(re.search(pattern, clean_data_type) for pattern in class_skip):
                     continue
                 if spec.get_container() == 0: # name in cls._many2one:
                     wrtmodels(

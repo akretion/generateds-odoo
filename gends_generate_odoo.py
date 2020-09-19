@@ -21,12 +21,15 @@ import sys
 import os
 import getopt
 import importlib
+import re
+from shutil import which
+from pathlib import Path
 if sys.version_info.major == 2:
     from StringIO import StringIO as stringio
 else:
     from io import StringIO as stringio
 from lxml import etree
-from odoo.wrap_text import wrap_text
+from wrap_text import wrap_text
 from collections import defaultdict
 
 #
@@ -36,11 +39,12 @@ from collections import defaultdict
 supermod = None
 
 # by default we sign XLM's with other tools, so we skip the Signature structure
-SimpleType_skip = ['TTransformURI']
-Class_skip = ['Signature', 'SignatureValue', 'SignedInfo',
-              'Reference', 'DigestMethod', 'Transforms',
-              'Transform', 'KeyInfo', 'X509Data',
-              'CanonicalizationMethod', 'SignatureMethod']
+SIMPLETYPE_SKIP = ['TTransformURI']
+SIGN_CLASS_SKIP = ['^Signature$', '^SignatureValue$', '^SignedInfo$',
+                   '^Reference$', '^DigestMethod$', '^Transforms$',
+                   '^Transform$', '^KeyInfo$', '^X509Data$',
+                   '^CanonicalizationMethod$', '^SignatureMethod$']
+#              '^ICMS\d+', '^ICMSSN\d+']
 
 #
 # Classes
@@ -128,12 +132,12 @@ def generate_model(options, module_name):
     models_writer = Writer(models_file_name)
     wrtmodels = models_writer.write
     version = options.output_dir.split('/')[-1]
-    security_dir = os.path.abspath(os.path.join(options.output_dir,
-                                                os.pardir, os.pardir,
-                                                'security', version))
-    security_writer = Writer("%s/%s" % (security_dir,
-                             'ir.model.access.csv'), mode='a')
-    wrtsecurity = security_writer.write
+#    security_dir = os.path.abspath(os.path.join(options.output_dir,
+#                                                os.pardir, os.pardir,
+#                                                'security', version))
+#    security_writer = Writer("%s/%s" % (security_dir,
+#                             'ir.model.access.csv'), mode='a')
+#    wrtsecurity = security_writer.write
     unique_name_map = make_unique_name_map(supermod.__all__)
 
     # collect implicit m2o related to explicit o2m:
@@ -188,14 +192,19 @@ def generate_model(options, module_name):
         textwrap_import=textwrap_import)
     wrtmodels(header)
 
-    sys.path.append(options.path)
+    if options.path:
+        sys.path.append(options.path)
+    else:
+        sys.path.append(str(Path(which("generateDS")).parent))
+#    sys.path.append(str(Path(__file__).parent))
+#    print(sys.path)
     generate_ds = importlib.import_module('generateDS')
 
 
 
     remapped_simple_types = {}
     for type_name in sorted(Defined_simple_type_table.keys()):
-        if type_name in SimpleType_skip: # TODO see later
+        if type_name in SIMPLETYPE_SKIP: # TODO see later
             continue
         descr = Defined_simple_type_table[type_name]
         if descr.get_enumeration_():
@@ -245,13 +254,16 @@ def generate_model(options, module_name):
                 if len(doc) > 0:
                     spec_doc = str(doc[0].text)
                     labels[type_node.attrib['name']][field.attrib['name']] = spec_doc
-
+    if options.skip:
+        class_skip = SIGN_CLASS_SKIP + options.skip.split('|')
+    else:
+        class_skip = SIGN_CLASS_SKIP
     for class_name in supermod.__all__:
-        if hasattr(supermod, class_name) and class_name.replace('Type','') not in Class_skip:
+        if hasattr(supermod, class_name) and not any(re.search(pattern, class_name.replace('Type', '')) for pattern in class_skip):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
-                wrtmodels, wrtsecurity, unique_name_map, options,
-                generate_ds, implicit_many2ones, labels, Class_skip,
+                wrtmodels, unique_name_map, options,
+                generate_ds, implicit_many2ones, labels, class_skip,
                 remapped_simple_types, module_name)
     models_writer.close()
     print('Wrote %d lines to %s' % (models_writer.get_count(),
@@ -307,14 +319,16 @@ def main():
     args = sys.argv[1:]
     try:
         opts, args = getopt.getopt(
-            args, 'hfs:d:l:x:p:s:', [
-                'help', 'force', 'infilename',
-                'no-class-suffixes', 'directory', 'path', 'schema'])
+                args, 'hfs:d:l:x:p:s:n:e:', [
+                    'help', 'force', 'infilename',
+                    'no-class-suffixes', 'directory', 'path', 'schema', 'notes', 'skip'])
     except:
         usage()
     options = ProgramOptions()
     options.force = False
     options.class_suffixes = False
+    options.notes = False
+    options.skip = False
     for opt, val in opts:
         if opt in ('-h', '--help'):
             usage()
@@ -332,6 +346,10 @@ def main():
             options.schema_name = val
         elif opt in ('-x', '--version'):
             options.version = val
+        elif opt in ('-n', '--notes'):
+            options.notes = val
+        elif opt in ('-e', '--skip'):
+            options.skip = val
     if len(args) != 1:
         usage()
     module_name = args[0]
