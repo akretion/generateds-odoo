@@ -157,7 +157,7 @@ class GeneratedsSuper(object):
         return prefix, name
 
     @classmethod
-    def extract_string_help_select(cls, field_name, doc):
+    def extract_string_help_select(cls, field_name, doc, unique_labels):
         help_attr = None
         string = field_name
         if doc:
@@ -178,12 +178,17 @@ class GeneratedsSuper(object):
             if string.endswith(':'):
                 string = string[:-1]
             if len(string) > 58:
-                string = field_name
+                string = field_name.split('_')[-1]
 
             if string != doc and string != doc[:-1]:
                 # help is only useful it adds more than a ponctuation symbol
                 doc = wrap_text(doc, 8, 78, initial_indent=14, multi=True)
                 help_attr = 'help=%s' % (doc)
+        if string in unique_labels:
+            string = "%s (%s)" % (string, field_name)
+            if len(string) > 58:
+                string = field_name.split('_')[-1]
+        unique_labels.add(string)
         return string, help_attr
 
     @classmethod
@@ -283,6 +288,7 @@ class GeneratedsSuper(object):
             wrtmodels("""],\n        "%s")\n""" % (
                 label))
 
+        unique_labels = set()
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
@@ -303,7 +309,7 @@ class GeneratedsSuper(object):
             if data_type == AnyTypeIdentifier:
                 data_type = 'string'
             string, help_attr = cls.extract_string_help_select(
-                spec.get_name(), spec_doc)
+                spec.get_name(), spec_doc, unique_labels)
 
             if is_optional:
                 options = 'string="%s",\n        xsd=True' % (string,)
@@ -373,7 +379,7 @@ class GeneratedsSuper(object):
                         enum_type = Defined_simple_type_table[original_st]
                         string, help_attr = cls.extract_string_help_select(
                            field_name,
-                           enum_type.get_descr_() or spec_doc)
+                           enum_type.get_descr_() or spec_doc, unique_labels)
                         if help_attr:
                             options = "%s,\n        %s" % (options_nohelp,
                                                            help_attr)
