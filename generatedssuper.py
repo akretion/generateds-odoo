@@ -241,8 +241,11 @@ class GeneratedsSuper(object):
             wrtmodels("    _description = '%s'\n" % (odoo_class_name.lower()))
         wrtmodels("    _name = '%s.%s.%s'\n" % (Lib_name, Version,
                                                 odoo_class_name.lower(), ))
-        wrtmodels("    _inherit = 'spec.mixin.nfe'\n")
+        wrtmodels("    _inherit = 'spec.mixin.%s'\n" % (Lib_name,))
         wrtmodels("    _generateds_type = '%s'\n" % (cls.__name__))
+        if len(cls.member_data_items_) == 0:
+            class_skip.append(cls.__name__)
+            return
         wrtmodels("    _concrete_rec_name = '%s_%s'\n\n" %
                   (Lib_name + Version, cls.member_data_items_[0].get_name()))
 #        wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
