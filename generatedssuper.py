@@ -16,52 +16,6 @@ Generate_DS_Super_Marker_ = None
 
 #
 # Tables of builtin types
-Simple_type_table = {
-    'string': None,
-    'normalizedString': None,
-    'token': None,
-    'base64Binary': None,
-    'hexBinary': None,
-    'integer': None,
-    'positiveInteger': None,
-    'negativeInteger': None,
-    'nonNegativeInteger': None,
-    'nonPositiveInteger': None,
-    'long': None,
-    'unsignedLong': None,
-    'int': None,
-    'unsignedInt': None,
-    'short': None,
-    'unsignedShort': None,
-    'byte': None,
-    'unsignedByte': None,
-    'decimal': None,
-    'float': None,
-    'double': None,
-    'boolean': None,
-    'duration': None,
-    'dateTime': None,
-    'date': None,
-    'time': None,
-    'gYear': None,
-    'gYearMonth': None,
-    'gMonth': None,
-    'gMonthDay': None,
-    'gDay': None,
-    'Name': None,
-    'QName': None,
-    'NCName': None,
-    'anyURI': None,
-    'language': None,
-    'ID': None,
-    'IDREF': None,
-    'IDREFS': None,
-    'ENTITY': None,
-    'ENTITIES': None,
-    'NOTATION': None,
-    'NMTOKEN': None,
-    'NMTOKENS': None,
-}
 Integer_type_table = {
     'integer': None,
     'positiveInteger': None,
@@ -120,6 +74,18 @@ Time_type_table = {
 Boolean_type_table = {
     'boolean': None,
 }
+Simple_type_table = {
+    'byte': None,
+    'unsignedByte': None,
+}
+Simple_type_table.update(Integer_type_table)
+Simple_type_table.update(Float_type_table)
+Simple_type_table.update(Decimal_type_table)
+Simple_type_table.update(String_type_table)
+Simple_type_table.update(Date_type_table)
+Simple_type_table.update(DateTime_type_table)
+Simple_type_table.update(Time_type_table)
+Simple_type_table.update(Boolean_type_table)
 
 
 #
