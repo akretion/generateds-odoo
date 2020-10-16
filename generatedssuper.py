@@ -270,7 +270,7 @@ class GeneratedsSuper(object):
         for spec in cls.member_data_items_:
             name = spec.get_name()
             choice = spec.get_choice()
-            if choice != None and not any(re.search(pattern, name) for pattern in class_skip):
+            if choice != None:
                 if choice not in choice_selectors.keys():
                     choice_selectors[choice] = []
                 choice_selectors[choice].append(name)
@@ -303,9 +303,8 @@ class GeneratedsSuper(object):
                 spec_doc = labels[class_name][name]
             else:
                 spec_doc = name
-            if data_type in Defined_simple_type_table:
-                data_type = (Defined_simple_type_table[data_type]
-                             ).get_type_name_()
+            while data_type in Defined_simple_type_table:
+                data_type = Defined_simple_type_table[data_type].get_type_name_()
             name = mapName(cleanupName(name))
             field_name = "%s%s" % (field_prefix, name)
             clean_data_type = mapName(cleanupName(data_type))
@@ -314,28 +313,28 @@ class GeneratedsSuper(object):
             string, help_attr = cls.extract_string_help_select(
                 spec.get_name(), spec_doc, unique_labels)
 
+            if len(spec.get_data_type_chain()) == 0 or not isinstance(spec.get_data_type_chain(), list):
+                original_st = data_type
+            else:
+                original_st = spec.get_data_type_chain()[0]
+
             if is_optional:
-                options = 'string="%s",\n        xsd=True' % (string,)
+                options = 'string="%s"' % (string, )
             else:
                 if len(string) + len(field_name) > 30:
-                    options = 'string="%s",\n        xsd=True,' \
-                              '\n        xsd_required=True' % (string,)
+                    options = 'string="%s",\n        xsd_required=True' % (string,)
                 else:
-                    options = 'string="%s", xsd=True, xsd_required=True' % (
-                        string,)
+                    options = 'string="%s", xsd_required=True' % (string,)
 
             if choice is not None:
                 options = """choice='%s',\n        %s""" % (choice, options)
 
             options_nohelp = options
+            if data_type in Simple_type_table:# and original_st != 'string':
+                options = '%s,\n        xsd_type="%s"' % (options, original_st)
+
             if help_attr:
                 options = "%s,\n        %s" % (options, help_attr,)
-
-            if len(spec.get_data_type_chain()) == 0:
-                original_st = data_type
-            else:
-                original_st = spec.get_data_type_chain()[0]
-
             if data_type in Simple_type_table:
                 if data_type in Integer_type_table:
                     wrtmodels('    %s = fields.Integer(\n        %s)\n' % (
