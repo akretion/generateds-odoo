@@ -85,9 +85,10 @@ class Writer(object):
 
 
 TEMPLATE_HEADER = """\
-# Copyright 2019 Akretion - Raphael Valyi <raphael.valyi@akretion.com>
+# Copyright 2020 Akretion - Raphaël Valyi <raphael.valyi@akretion.com>
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.en.html).
-# Generated {tstamp} by generateDS.py{version}.
+# Generated {tstamp} by https://github.com/akretion/generateds-odoo
+# and generateDS.py.
 # Python {pyversion}
 #{textwrap_import}
 from odoo import fields, models
@@ -246,7 +247,7 @@ def generate_model(options, module_name):
                            namespaces=ns)
     labels = {}
     for type_node in [t for t in type_nodes if t.attrib.get('name')]:
-        labels[type_node.attrib['name']] = {}
+        labels[type_node.attrib.get('name')] = {}
         field_nodes = type_node.xpath(".//xs:element", namespaces=ns)
         for field in field_nodes:
             if field.attrib.get('name'):
@@ -259,6 +260,9 @@ def generate_model(options, module_name):
     else:
         class_skip = SIGN_CLASS_SKIP
     for class_name in supermod.__all__:
+#        if class_name != 'OnlySomeClassType':
+#            continue
+
         if hasattr(supermod, class_name) and not any(re.search(pattern, class_name.replace('Type', '')) for pattern in class_skip):
             cls = getattr(supermod, class_name)
             cls.generate_model_(
