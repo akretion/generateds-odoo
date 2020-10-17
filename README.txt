@@ -1,25 +1,31 @@
-============================================
-Instructions on running the Django support
-============================================
+============================================================================================
+Odoo generateDS plugin: generate Odoo asbtract model mixins and fields from your xsd schemas
+============================================================================================
 
-Also see:
+This plugin has been developped by Raphaël Valyi from Akretion and was derived from
+the official Django generateDS plugin that is documented here:
 http://www.davekuhlman.org/generateDS.html#django-generating-models-and-forms
+
+This Odoo plugin generate only models. Odoo is able to generate views dynamically alone
+and we also made the dedicated spec_driven_model Odoo module to help with views.
+You can read how it evolved from the Django plugin by looking at the commits log.
+
+Disclaimer: we know this code doesn't really look like modern Python. But this is
+an assumed choice: we prefer not changing the code too much from the original Django
+plugin so if generateDS evolves it will be easier to follow the changes here.
 
 Although, there are likely other configurations that will work, one
 reasonably simple way is the following:
 
-1. Download the source distribution of generateDS with the
+
+1. Install generateDS::
+
+       $ pip install generateDS
+
+1. Download the source distribution of generateds-odoo with the
    following::
 
-       $ hg clone https://dkuhlman@bitbucket.org/dkuhlman/generateds
-
-   Alternatively, you can download a Zip file from here:
-   https://bitbucket.org/dkuhlman/generateds/downloads/
-
-   Or, a tar file from here:
-   https://pypi.python.org/pypi/generateDS
-
-   And, then unroll it.
+       $ git clone https://github.com/akretion/generateds-odoo
 
 2. Change directory to the ``django`` directory (i.e. the directory
    containing this file)::
@@ -35,17 +41,19 @@ reasonably simple way is the following:
 
        $ cp ../generateDS.py .
 
-4. In that directory, Run ``gends_run_gen_django.py``.  For
+4. In that directory, Run ``gends_run_gen_odoo.py``.  For
    example::
 
-       $ cp ../tests/people.xsd .
-       $ ./gends_run_gen_django.py -f -v people.xsd
+       $ # Brazilian electronic invoice:
+       $ python3 gends_run_gen_odoo.py -f -l nfe -x 4_00 -e '^ICMS\d+|^ICMSSN\d+' -d . -v /tmp/generated/schemas/nfe/v4_00/leiauteNFe_v4.00.xsd
+       $
+       $ # UBL 2.3 invoice:
+       $ python3 gends_run_gen_odoo.py -f -l ubl -x 23 -d . -v /home/rvalyi/DEV/UBL-2.3/xsd/maindoc/UBL-Invoice-2.3.xsd
 
 If the above ran successfully, it should have created these files::
 
-    models.py
-    forms.py
-    admin.py
+    leiauteNFe_v400lib.py
+    UBL-Invoice-23lib.py
 
 
 .. vim:ft=rst:
