@@ -1,25 +1,31 @@
 import textwrap
 
 
-def wrap_text(text, indent, width=79, initial_indent=4, multi=False,
-              preserve_line_breaks=True, quote=True):
+def wrap_text(
+    text,
+    indent,
+    width=79,
+    initial_indent=4,
+    multi=False,
+    preserve_line_breaks=True,
+    quote=True,
+):
     text = text.strip()
     if not multi:
         if not quote:
-            quote = ''
-        elif len(text) + initial_indent + 8 > width or "\n" in text\
-                or '"' in text:
+            quote = ""
+        elif len(text) + initial_indent + 8 > width or "\n" in text or '"' in text:
             quote = '"""'
         else:
             quote = '"'
         if text[0] == '"':
-            text = '%s %s' % (quote, text)
+            text = "{} {}".format(quote, text)
         else:
-            text = '%s%s' % (quote, text)
+            text = "{}{}".format(quote, text)
         if text[-1] == '"':
-            text = '%s %s' % (text, quote)
+            text = "{} {}".format(text, quote)
         else:
-            text = '%s%s' % (text, quote)
+            text = "{}{}".format(text, quote)
     else:
         width -= 3
 
@@ -34,29 +40,30 @@ def wrap_text(text, indent, width=79, initial_indent=4, multi=False,
                 w = width - indent
             else:
                 w = width
-        lines = textwrap.fill(' '.join(l.strip().split()), width=w,
-                              subsequent_indent=' ' * indent,
-                              replace_whitespace=False).splitlines()
+        lines = textwrap.fill(
+            " ".join(l.strip().split()),
+            width=w,
+            subsequent_indent=" " * indent,
+            replace_whitespace=False,
+        ).splitlines()
         wrapped_lines += [i.strip() for i in lines]
     text = ("\n" + " " * indent).join(wrapped_lines)
 
     if not multi:
         return text
     else:
-        lines = ["\"%s\"" % (i.strip().replace('"', "'"),)
-                 for i in text.splitlines()]
+        lines = ['"{}"'.format(i.strip().replace('"', "'")) for i in text.splitlines()]
         lines2 = []
         c = 0
         for l in lines:
             if preserve_line_breaks:
                 if c != 0:
-                    l = "\"\\n%s" % (l[1:100],)
+                    l = '"\\n{}'.format(l[1:100])
             elif c != len(lines) - 1:
-                l = "%s \"" % (l[0:-1])
+                l = '%s "' % (l[0:-1])
             c += 1
             lines2.append(l)
-        text = ("\n%s" % (" " * indent,)).join(lines2)
+        text = ("\n{}".format(" " * indent)).join(lines2)
         if "\n" in text:
-            text = "%s" % (text,)
+            text = "{}".format(text)
         return text
-
