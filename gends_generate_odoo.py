@@ -245,8 +245,12 @@ def generate_model(options, module_name):
             type_name = type_name.upper()
             remapped_simple_types[old_name] = type_name
             wrtmodels("\n{} = [".format(type_name))
+            vals = set()
             for i in enum:
                 value = i[0][0:32]  # FIXME for CCe, wrap it like label instead
+                if value.lower() in vals:  # would crash Odoo v13/v14 otherwise.
+                    continue
+                vals.add(value.lower())
                 offset = len(value) + 10
                 label = wrap_text(
                     i[1],
