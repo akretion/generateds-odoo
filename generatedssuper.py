@@ -232,18 +232,6 @@ class GeneratedsSuper(object):
         if len(cls.member_data_items_) == 0:
             class_skip.append(cls.__name__)
             return
-        wrtmodels(
-            "    _concrete_rec_name = '%s_%s'\n\n"
-            % (Lib_name + Version, cls.member_data_items_[0].get_name())
-        )
-        #        wrtsecurity("access_%s_%s_%s_%s,%s.%s.%s,model_%s_%s_%s,base.group_user,1,1,1,1\n" % (
-        #            module_name[:14], Lib_name, Version, odoo_class_name.lower(),
-        #        Lib_name, Version, odoo_class_name.lower(),
-        #        Lib_name, Version, odoo_class_name.lower().replace('.', '_')))
-        #        if cls.superclass is not None:
-        #            wrtmodels('    %s = models.ForeignKey("%s%s")\n' % (
-        #                cls.superclass.__name__, cls.superclass.__name__,
-        #                model_suffix, ))
 
         if class_name in implicit_many2ones:
             for item in implicit_many2ones[class_name]:
