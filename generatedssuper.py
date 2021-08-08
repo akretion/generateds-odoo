@@ -215,7 +215,7 @@ class GeneratedsSuper(object):
         if cls.__doc__:
             wrtmodels("    {}\n".format(wrap_text(cls.__doc__, 4, 79)))
             # setting _description with docstring avoids re-splitting
-            # doc lines again once they were formated for the Python lib
+            # doc lines again once they were formatted for the Python lib
             wrtmodels('    _description = textwrap.dedent("    %s" % (__doc__,))\n')
         else:
             wrtmodels("    _description = '%s'\n" % (odoo_class_name.lower()))
