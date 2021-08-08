@@ -330,7 +330,7 @@ def resolve_1_simple_type(descriptor, resolved, unresolved):
             # If we can't find it, try after stripping off namespace prefix.
             type_name = type_name.split(":")[-1]
             if type_name not in unresolved:
-                raise XmlSchemaError(
+                raise etree.XmlSchemaError(
                     "Can't find simple type (%s) in unresolved types." % (type_name)
                 )
         type_obj = resolve_1_simple_type(unresolved[type_name], resolved, unresolved)
