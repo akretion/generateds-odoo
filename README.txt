@@ -1,8 +1,8 @@
 ============================================================================================
-Odoo generateDS plugin: generate Odoo asbtract model mixins and fields from your xsd schemas
+Odoo generateDS plugin: generate Odoo abstract model mixins and fields from your xsd schemas
 ============================================================================================
 
-This plugin has been developped by Raphaël Valyi from Akretion and was derived from
+This plugin has been developed by Raphaël Valyi from Akretion and was derived from
 the official Django generateDS plugin that is documented here:
 http://www.davekuhlman.org/generateDS.html#django-generating-models-and-forms
 
