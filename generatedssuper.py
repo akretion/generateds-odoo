@@ -88,6 +88,7 @@ Simple_type_table.update(DateTime_type_table)
 Simple_type_table.update(Time_type_table)
 Simple_type_table.update(Boolean_type_table)
 
+MONETARY_DIGITS = 2
 
 #
 # Classes
@@ -329,6 +330,10 @@ class GeneratedsSuper(object):
                     help_attr,
                 )
             if data_type in Simple_type_table:
+                if "TDec_" in original_st:  # TODO make more flexible
+                    digits = int(original_st[8])
+                else:
+                    digits = False
                 if data_type in Integer_type_table:
                     wrtmodels(
                         "    %s = fields.Integer(\n        %s)\n"
@@ -337,7 +342,13 @@ class GeneratedsSuper(object):
                             options,
                         )
                     )
-                elif data_type in Float_type_table:
+                elif data_type in Float_type_table or digits and digits != MONETARY_DIGITS:
+                    if digits:
+                        if len(string) > 50:
+                            options = "\n        {}".format(options)
+                            options = "digits={},{}".format(digits, options)
+                        else:
+                            options = "digits={}, {}".format(digits, options)
                     wrtmodels(
                         "    %s = fields.Float(\n        %s)\n"
                         % (
@@ -346,13 +357,6 @@ class GeneratedsSuper(object):
                         )
                     )
                 elif data_type in Decimal_type_table or "TDec_" in original_st:
-                    if "TDec_" in original_st:  # TODO make more flexible
-                        digits = original_st[8]
-                        if len(string) > 50:
-                            options = "\n        {}".format(options)
-                            options = "digits={},{}".format(digits, options)
-                        else:
-                            options = "digits={}, {}".format(digits, options)
                     wrtmodels(
                         "    %s = fields.Monetary(\n        "
                         'currency_field="brl_currency_id",\n        %s)\n'
