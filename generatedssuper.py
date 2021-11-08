@@ -346,9 +346,9 @@ class GeneratedsSuper(object):
                     if digits:
                         if len(string) > 50:
                             options = "\n        {}".format(options)
-                            options = "digits={},{}".format(digits, options)
+                            options = "digits=(16, {}),{}".format(digits, options)
                         else:
-                            options = "digits={}, {}".format(digits, options)
+                            options = "digits=(16, {}), {}".format(digits, options)
                     wrtmodels(
                         "    %s = fields.Float(\n        %s)\n"
                         % (
