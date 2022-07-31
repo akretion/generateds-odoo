@@ -330,8 +330,8 @@ class GeneratedsSuper(object):
                     help_attr,
                 )
             if data_type in Simple_type_table:
-                if "TDec_" in original_st:  # TODO make more flexible
-                    digits = int(original_st[8])
+                if original_st.startswith("TDec_"):  # TODO make more flexible
+                    digits = (int(original_st[5:7]), int(original_st[7:9]),)
                 else:
                     digits = False
                 if data_type in Integer_type_table:
@@ -342,13 +342,13 @@ class GeneratedsSuper(object):
                             options,
                         )
                     )
-                elif data_type in Float_type_table or digits and digits != MONETARY_DIGITS:
+                elif data_type in Float_type_table or digits and digits[1] != MONETARY_DIGITS:
                     if digits:
                         if len(string) > 50:
                             options = "\n        {}".format(options)
-                            options = "digits=(16, {}),{}".format(digits, options)
+                            options = "digits=({}, {}),{}".format(digits[0]. digits[1], options)
                         else:
-                            options = "digits=(16, {}), {}".format(digits, options)
+                            options = "digits=({}, {}), {}".format(digits[0], digits[1], options)
                     wrtmodels(
                         "    %s = fields.Float(\n        %s)\n"
                         % (
