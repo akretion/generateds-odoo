@@ -1,3 +1,8 @@
+DEPRECATION NOTICE: we switch to xsdata for XML data binding, and I created an odoo generator
+for xsdata https://github.com/akretion/xsdata-odoo
+While generateDS served us well, we prefer xsdata a lot: its code is way cleaner and more tested.
+So we won't maintain this generateDS plugin anymore.
+
 ============================================================================================
 Odoo generateDS plugin: generate Odoo abstract model mixins and fields from your xsd schemas
 ============================================================================================
